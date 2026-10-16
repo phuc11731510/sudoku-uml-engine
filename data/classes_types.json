@@ -1,0 +1,168 @@
+{
+  "classes": [
+    {
+      "id": "BasicTypes",
+      "stereotype": "types",
+      "package": "model",
+      "status": "core",
+      "read": 0,
+      "stage": 0,
+      "readWhy": "Đọc trước nhất: mọi chữ ký trong sơ đồ dùng các tên kiểu này, nhưng chúng không phải lớp nên không có thẻ riêng.",
+      "summary": "Bảng định nghĩa các tên kiểu dùng trong chữ ký: Vertex, Color, CliqueId, Edge, Nanos và các kiểu chứa.",
+      "role": "Không phải một lớp. Đây là bảng tra: các tên như `Vertex` và `Color` chỉ là số nguyên nhỏ, còn `Array`, `List`, `Optional`, `Iterator` là kiểu chứa của ngôn ngữ. Rê chuột lên một tên kiểu trong bất kỳ chữ ký nào để xem định nghĩa, hoặc bấm để mở dòng tương ứng ở đây.",
+      "graph": "Chỉ số đỉnh (Vertex) và màu (Color) là hai kiểu cơ bản của mô hình tô màu đồ thị: đỉnh là số từ 0 đến 80, màu là số từ 1 đến 9.",
+      "invariants": [],
+      "attributes": [
+        {
+          "name": "Vertex",
+          "token": "Vertex",
+          "type": "int, từ 0 đến 80 (hoặc −1)",
+          "vis": "",
+          "summary": "Chỉ số của một đỉnh, tức một ô của bảng: `v = hàng × 9 + cột`. Giá trị −1 (`NO_VERTEX`) nghĩa là «không có đỉnh nào».",
+          "detail": "Vertex không phải lớp vì mỗi đỉnh chỉ cần một số nguyên nhỏ; bọc thành đối tượng sẽ tốn bộ nhớ và thời gian mà không thêm lợi ích.",
+          "example": "Ô giữa bảng có v = 4 × 9 + 4 = 40; ô ở hàng 0, cột 2 có v = 2.",
+          "cpp": "`int` trong tham số và giá trị trả về; `std::uint8_t` khi nằm trong mảng",
+          "python": "`int`"
+        },
+        {
+          "name": "Color",
+          "token": "Color",
+          "type": "int, từ 0 đến 9",
+          "vis": "",
+          "summary": "Một màu, tức một chữ số của Sudoku. Giá trị 0 (`NO_COLOR`) nghĩa là đỉnh chưa được tô; 1 đến 9 là chữ số.",
+          "detail": "Color không phải lớp: mỗi ô chỉ cần một số nguyên nhỏ, nên bọc thành đối tượng sẽ tốn bộ nhớ và thời gian mà không thêm lợi ích (cùng lý do với quyết định D05 về `ColorSet` ở mục 10 của `walkthrough-thiet-ke-engine.md`). Tập nhiều màu được lưu trong một số nguyên 9 bit gọi là `ColorSet`.",
+          "example": "Ô đã điền chữ số 5 có Color = 5; ô trống có Color = 0.",
+          "cpp": "`int` trong tham số; `std::uint8_t` trong mảng",
+          "python": "`int`"
+        },
+        {
+          "name": "CliqueId",
+          "token": "CliqueId",
+          "type": "int, từ 0 đến 26",
+          "vis": "",
+          "summary": "Mã của một trong 27 nhóm 9 ô (clique cực đại): 0 đến 8 là chín hàng, 9 đến 17 là chín cột, 18 đến 26 là chín khối 3×3.",
+          "example": "Ô v = 40 thuộc ba nhóm có mã 4 (hàng 4), 13 (cột 4, tức 9 + 4) và 22 (khối 4, tức 18 + 4).",
+          "cpp": "`std::uint8_t`",
+          "python": "`int`"
+        },
+        {
+          "name": "Edge",
+          "token": "Edge",
+          "type": "cặp (u, v) với u < v",
+          "vis": "",
+          "summary": "Một cạnh của đồ thị Sudoku: cặp hai đỉnh kề nhau, ghi đỉnh nhỏ trước.",
+          "example": "Cạnh đầu tiên là (0, 1); cạnh cuối cùng là (79, 80).",
+          "cpp": "`std::pair<std::uint8_t, std::uint8_t>`",
+          "python": "`tuple[int, int]`"
+        },
+        {
+          "name": "Nanos",
+          "token": "Nanos",
+          "type": "int 64 bit",
+          "vis": "",
+          "summary": "Khoảng thời gian tính bằng nano giây.",
+          "example": "4 380 000 nano giây là khoảng 4,38 mili giây.",
+          "cpp": "`std::int64_t`",
+          "python": "`int`"
+        },
+        {
+          "name": "Array<T, N>",
+          "token": "Array",
+          "type": "mảng N phần tử kiểu T",
+          "vis": "",
+          "summary": "Mảng độ dài cố định N, được cấp phát một lần (không đổi kích thước).",
+          "example": "`Array<Color, 81>` là màu của 81 đỉnh; `Array<ColorSet, 27>` là 27 mặt nạ của Board.",
+          "cpp": "`std::array<T, N>`",
+          "python": "`list` cấp phát trước (hoặc `tuple` nếu bất biến, `bytearray` cho byte)"
+        },
+        {
+          "name": "List<T>",
+          "token": "List",
+          "type": "danh sách kiểu T",
+          "vis": "",
+          "summary": "Danh sách có độ dài thay đổi.",
+          "example": "`List<Puzzle>`, `List<Color>`.",
+          "cpp": "`std::vector<T>`",
+          "python": "`list`"
+        },
+        {
+          "name": "Optional<T>",
+          "token": "Optional",
+          "type": "giá trị kiểu T hoặc vắng mặt",
+          "vis": "",
+          "summary": "Một giá trị có thể không tồn tại.",
+          "example": "`Board.fromPuzzle` trả về `Optional<Board>`: rỗng khi các ô cho sẵn xung đột.",
+          "cpp": "`std::optional<T>`",
+          "python": "giá trị hoặc `None`"
+        },
+        {
+          "name": "Iterator<T>",
+          "token": "Iterator",
+          "type": "bộ lặp trả về từng phần tử kiểu T",
+          "vis": "",
+          "summary": "Một nguồn trả về lần lượt từng phần tử kiểu T mà không cần nạp tất cả vào bộ nhớ.",
+          "example": "`BenchmarkRunner.run` đọc đề qua `Iterator<Puzzle>`; `PuzzleSetReader` là một bộ lặp như vậy.",
+          "cpp": "lớp có `begin()` và `end()`, hoặc hàm `next()` trả `std::optional<T>`",
+          "python": "đối tượng có `__iter__` và `__next__`, hoặc generator"
+        },
+        {
+          "name": "int",
+          "token": "int",
+          "type": "số nguyên có dấu",
+          "vis": "",
+          "summary": "Số nguyên.",
+          "cpp": "`int` (hoặc `std::int32_t`)",
+          "python": "`int`"
+        },
+        {
+          "name": "bool",
+          "token": "bool",
+          "type": "đúng hoặc sai",
+          "vis": "",
+          "summary": "Giá trị logic.",
+          "cpp": "`bool`",
+          "python": "`bool`"
+        },
+        {
+          "name": "float",
+          "token": "float",
+          "type": "số thực",
+          "vis": "",
+          "summary": "Số thực.",
+          "cpp": "`double`",
+          "python": "`float`"
+        },
+        {
+          "name": "String",
+          "token": "String",
+          "type": "chuỗi ký tự",
+          "vis": "",
+          "summary": "Chuỗi ký tự.",
+          "cpp": "`std::string`",
+          "python": "`str`"
+        },
+        {
+          "name": "void",
+          "token": "void",
+          "type": "không có giá trị trả về",
+          "vis": "",
+          "summary": "Hàm chỉ làm một việc và không trả về gì.",
+          "cpp": "`void`",
+          "python": "`None`"
+        }
+      ],
+      "methods": [],
+      "impl": {
+        "cpp": "Không có lớp nào. `using Vertex = int;`, `using Color = int;` hoặc kiểu số nguyên nhỏ tương ứng trong mảng.",
+        "python": "Không có lớp nào. Dùng thẳng `int`; có thể đặt `Vertex = int` để chú thích kiểu."
+      },
+      "notes": [
+        "`ColorSet` cũng là một số nguyên (9 bit) nhưng có nhiều phép toán riêng nên được vẽ thành thẻ riêng."
+      ],
+      "pos": [
+        0,
+        117
+      ]
+    }
+  ]
+}

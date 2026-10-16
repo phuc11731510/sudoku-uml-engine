@@ -1,0 +1,86 @@
+{
+  "meta": {
+    "title": "Thiết kế UML của engine Sudoku (tô màu đồ thị)",
+    "version": "0.1",
+    "updated": "2026-10-16"
+  },
+  "packages": [
+    {
+      "id": "model",
+      "name": "Mô hình bài toán",
+      "color": "#3b82f6",
+      "description": "Đồ thị Sudoku, đề bài và trạng thái đang tô màu."
+    },
+    {
+      "id": "search",
+      "name": "Chiến lược chọn đỉnh",
+      "color": "#a855f7",
+      "description": "Quy tắc chọn đỉnh tiếp theo để tô. Đây là chỗ duy nhất khác nhau giữa quay lui thường và quay lui DSATUR."
+    },
+    {
+      "id": "solvers",
+      "name": "Bộ giải",
+      "color": "#22c55e",
+      "description": "Máy trạng thái chạy từng bước: quay lui chính xác và tô màu tham lam."
+    },
+    {
+      "id": "results",
+      "name": "Kết quả và sự kiện",
+      "color": "#f59e0b",
+      "description": "Giới hạn chạy, kết quả, bộ đếm thống kê và sự kiện từng bước."
+    },
+    {
+      "id": "support",
+      "name": "Kiểm tra, dữ liệu, thực nghiệm",
+      "color": "#14b8a6",
+      "description": "Tạo bộ giải theo tên, kiểm tra lời giải, đọc tập đề, chạy thực nghiệm."
+    },
+    {
+      "id": "analysis",
+      "name": "Phân tích đồ thị (tùy chọn)",
+      "color": "#ec4899",
+      "description": "Đo tính chất của đồ thị Sudoku và so sánh số màu của thuật toán tham lam."
+    }
+  ],
+  "readingStages": [
+    {
+      "id": 0,
+      "title": "Kiểu cơ bản",
+      "text": "Các tên kiểu dùng trong mọi chữ ký (Vertex, Color, ...). Chúng không phải lớp nên chỉ có một thẻ tra cứu; đọc trước nhất."
+    },
+    {
+      "id": 1,
+      "title": "Bài toán và trạng thái",
+      "text": "Đề bài là gì, đồ thị Sudoku trông thế nào, và trạng thái đang tô màu được lưu ra sao. Đây là nền của mọi lớp còn lại."
+    },
+    {
+      "id": 2,
+      "title": "Chọn đỉnh tiếp theo",
+      "text": "Quy tắc chọn ô để tô tiếp. Đây là chỗ duy nhất khác nhau giữa quay lui thường và quay lui DSATUR."
+    },
+    {
+      "id": 3,
+      "title": "Giới hạn, kết quả và sự kiện",
+      "text": "Các giá trị mà bộ giải nhận vào và trả ra: giới hạn chạy, trạng thái kết thúc, bộ đếm thống kê, sự kiện từng bước."
+    },
+    {
+      "id": 4,
+      "title": "Bộ giải",
+      "text": "Máy trạng thái chạy từng bước: khung chung, rồi quay lui chính xác (hướng A) và tô màu tham lam (hướng B)."
+    },
+    {
+      "id": 5,
+      "title": "Tạo bộ giải, kiểm tra và thực nghiệm",
+      "text": "Chọn bộ giải theo tên, kiểm tra lời giải từ đầu, đọc tập đề và chạy so sánh trên nhiều đề."
+    },
+    {
+      "id": 6,
+      "title": "Phân tích đồ thị (tùy chọn)",
+      "text": "Đo tính chất của đồ thị Sudoku. Đề xuất chưa chốt; bỏ phần này không ảnh hưởng phần còn lại."
+    }
+  ],
+  "layoutRef": {
+    "w": 360,
+    "meanH": 280.5
+  }
+}

@@ -1,0 +1,921 @@
+{
+  "classes": [
+    {
+      "id": "VertexSelector",
+      "stereotype": "interface",
+      "package": "search",
+      "status": "core",
+      "summary": "Giao diện «chọn đỉnh chưa tô tiếp theo». Là điểm khác nhau duy nhất giữa các thuật toán.",
+      "role": "Tách quyết định «tô đỉnh nào trước» ra khỏi thuật toán duyệt. Quay lui thường và quay lui DSATUR dùng cùng một bộ giải, chỉ khác bộ chọn đỉnh; tô màu tham lam với thứ tự cố định và tô màu tham lam DSATUR cũng vậy. Nhờ đó so sánh các thuật toán là công bằng: mọi phần còn lại giống hệt nhau.",
+      "graph": "Quy tắc sắp thứ tự đỉnh của thuật toán tô màu tuần tự: thứ tự cố định (theo chỉ số) hoặc thứ tự động theo độ bão hòa (DSATUR).",
+      "invariants": [
+        "V1. `select` không sửa `board`.",
+        "V2. Giá trị trả về là một đỉnh chưa tô, hoặc `NO_VERTEX` khi mọi đỉnh đã tô."
+      ],
+      "attributes": [],
+      "methods": [
+        {
+          "name": "select",
+          "abstract": true,
+          "vis": "+",
+          "params": [
+            "board: Board",
+            "previous: Vertex"
+          ],
+          "returns": "Vertex",
+          "summary": "Trả về đỉnh chưa tô cần xử lý tiếp, hoặc NO_VERTEX nếu đã tô hết.",
+          "detail": "`previous` là đỉnh mà CHÍNH bộ chọn này đã trả về ở bước trước trên cùng đường đi tìm kiếm, hoặc `NO_VERTEX` ở gốc. Bộ chọn được tự do dùng nó làm gợi ý hoặc bỏ qua. Ràng buộc này chỉ đúng vì mỗi bộ giải dùng đúng một bộ chọn trong suốt một lần chạy.",
+          "pre": [
+            "`board` đúng trạng thái hiện tại của bộ giải.",
+            "`previous` là đỉnh mà bộ chọn này trả về ở bước trước, hoặc NO_VERTEX."
+          ],
+          "post": [
+            "Trả về đỉnh chưa tô hoặc NO_VERTEX.",
+            "`board` không đổi."
+          ],
+          "complexity": "Tùy lớp con: O(81) trường hợp xấu nhất",
+          "perf": "Được gọi một lần ở mỗi nút của cây tìm kiếm qua một lời gọi hàm ảo (C++). Với DSATUR, lời gọi đó rẻ so với 81 lần đọc mặt nạ bên trong; với thứ tự cố định thì lời gọi ảo chiếm tỉ lệ lớn hơn. Chưa đo. Nếu đo thấy đáng kể, đổi bộ giải thành lớp mẫu theo kiểu bộ chọn (C++ template) mà không đổi sơ đồ logic.",
+          "example": "Đề mẫu, lúc đầu: bộ chọn thứ tự cố định trả về 2 (ô trống đầu tiên); bộ chọn DSATUR trả về 40 (ô giữa bảng, độ bão hòa 8)."
+        },
+        {
+          "name": "name",
+          "abstract": true,
+          "vis": "+",
+          "params": [],
+          "returns": "String",
+          "summary": "Tên ngắn của chiến lược, để in trong kết quả và giao diện.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Chuỗi không rỗng."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng.",
+          "example": "«first-uncolored», «max-saturation»."
+        }
+      ],
+      "impl": {
+        "cpp": "Lớp cơ sở trừu tượng với hàm ảo thuần túy `virtual Vertex select(const Board&, int) const = 0;`. Bộ giải giữ con trỏ thông minh hoặc tham chiếu tới bộ chọn.",
+        "python": "`abc.ABC` với `@abstractmethod`."
+      },
+      "notes": [
+        "Bộ chọn không có trạng thái riêng nên một đối tượng dùng chung cho nhiều bộ giải được; nếu sau này cần bộ chọn có trạng thái (ví dụ ghi nhớ) thì phải dựng riêng cho mỗi bộ giải."
+      ],
+      "read": 6,
+      "stage": 2,
+      "readWhy": "Giao diện chung: bộ giải hỏi nó đỉnh nào tô tiếp. Nó đọc Board nên đứng sau Board.",
+      "pos": [
+        1931,
+        825
+      ]
+    },
+    {
+      "id": "FirstUncoloredSelector",
+      "stereotype": "class",
+      "package": "search",
+      "status": "core",
+      "summary": "Thứ tự cố định: luôn lấy ô chưa tô có chỉ số nhỏ nhất (hàng trước, cột sau).",
+      "role": "Bộ chọn của quay lui thường (mục 5.1) và của tô màu tham lam theo thứ tự cố định. Đây là mốc so sánh: không dùng thông tin gì từ trạng thái bảng.",
+      "graph": "Thứ tự đỉnh cố định v = 0, 1, ..., 80. Trên đồ thị Sudoku rỗng, tô màu tham lam theo thứ tự này cần 14 màu (đã đo ở walkthrough-bat-dau-ke-hoach.md mục 2).",
+      "invariants": [],
+      "attributes": [],
+      "methods": [
+        {
+          "name": "FirstUncoloredSelector",
+          "ctor": true,
+          "vis": "+",
+          "params": [],
+          "returns": "",
+          "summary": "Tạo bộ chọn theo thứ tự cố định (không có tham số).",
+          "detail": "",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Bộ chọn không có trạng thái riêng."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần; không nằm trong vòng lặp nóng."
+        },
+        {
+          "name": "select",
+          "vis": "+",
+          "params": [
+            "board: Board",
+            "previous: Vertex"
+          ],
+          "returns": "Vertex",
+          "summary": "Quét tăng dần từ max(previous, 0) và trả về đỉnh chưa tô đầu tiên.",
+          "detail": "Chạy đúng nhờ ràng buộc: các đỉnh có chỉ số nhỏ hơn `previous` đều đã được tô (do chính bộ chọn này chọn trước đó hoặc là ô cho sẵn), và vẫn còn tô khi quay lui vì bộ giải chỉ bỏ các đỉnh sâu hơn.",
+          "pre": [
+            "Như VertexSelector.select."
+          ],
+          "post": [
+            "Đỉnh có chỉ số nhỏ nhất mà chưa tô, hoặc NO_VERTEX."
+          ],
+          "complexity": "Tối đa O(81); thường rất ngắn nhờ gợi ý previous",
+          "perf": "Nhờ gợi ý `previous`, mỗi lần chỉ bước qua vài ô thay vì quét từ 0. Đây là tối ưu rẻ để mốc so sánh không bị chậm một cách giả tạo; ảnh hưởng chưa đo.",
+          "example": "Đề mẫu: `select(board, NO_VERTEX) = 2`; sau khi tô ô 2, `select(board, 2) = 3`; sau khi tô ô 3, `select(board, 3) = 5` (ô 4 là chữ số cho sẵn nên bị bỏ qua)."
+        },
+        {
+          "name": "name",
+          "vis": "+",
+          "params": [],
+          "returns": "String",
+          "summary": "Trả về «first-uncolored».",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Chuỗi không rỗng."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        }
+      ],
+      "impl": {
+        "cpp": "Lớp con công khai của VertexSelector; đánh dấu `final` để trình biên dịch có thể bỏ lời gọi ảo khi biết kiểu cụ thể.",
+        "python": "Lớp con của VertexSelector."
+      },
+      "notes": [],
+      "read": 7,
+      "stage": 2,
+      "readWhy": "Cách chọn đơn giản nhất (thứ tự cố định), dùng làm mốc so sánh.",
+      "pos": [
+        1802,
+        582
+      ]
+    },
+    {
+      "id": "MaxSaturationSelector",
+      "stereotype": "class",
+      "package": "search",
+      "status": "core",
+      "summary": "DSATUR: chọn đỉnh chưa tô có độ bão hòa lớn nhất, tức là ô có ít ứng viên nhất (MRV).",
+      "role": "Bộ chọn của quay lui DSATUR (mục 5.2, 5.8) và của tô màu tham lam DSATUR. Quét 81 đỉnh, bỏ đỉnh đã tô, tính độ bão hòa bằng đếm bit của hợp ba mặt nạ, giữ đỉnh tốt nhất. Dừng sớm khi gặp độ bão hòa 9 (đỉnh hết màu: thất bại sớm nhất có thể).",
+      "graph": "DSATUR (Brélaz): chọn đỉnh có độ bão hòa lớn nhất. Vì độ bão hòa = 9 − số ứng viên, nó trùng với heuristic «chọn ô ít ứng viên nhất» (MRV) của các solver Sudoku.",
+      "invariants": [
+        "M1. Nếu trả về v thì không có đỉnh chưa tô nào khác có độ bão hòa lớn hơn `saturation(v)`."
+      ],
+      "attributes": [
+        {
+          "name": "tieBreak",
+          "type": "TieBreak",
+          "vis": "-",
+          "readonly": true,
+          "summary": "Luật chọn khi nhiều đỉnh cùng độ bão hòa lớn nhất.",
+          "detail": "Mặc định `LOWEST_INDEX` (rẻ nhất).",
+          "example": "Đề mẫu lúc đầu: bốn đỉnh có độ bão hòa 8. `LOWEST_INDEX` chọn đỉnh nhỏ nhất trong số đó (ô 40). `MOST_UNCOLORED_NEIGHBORS` chọn ô 59 (11 đỉnh kề chưa tô)."
+        }
+      ],
+      "methods": [
+        {
+          "name": "MaxSaturationSelector",
+          "ctor": true,
+          "vis": "+",
+          "params": [
+            "tieBreak: TieBreak = LOWEST_INDEX"
+          ],
+          "returns": "",
+          "summary": "Tạo bộ chọn DSATUR với luật hòa đã cho (mặc định `LOWEST_INDEX`).",
+          "detail": "",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "`tieBreak` được ghi lại và không đổi nữa."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần; không nằm trong vòng lặp nóng.",
+          "cpp": "`explicit MaxSaturationSelector(TieBreak tieBreak = TieBreak::LowestIndex);`",
+          "python": "`__init__(self, tie_break=TieBreak.LOWEST_INDEX)`."
+        },
+        {
+          "name": "select",
+          "vis": "+",
+          "params": [
+            "board: Board",
+            "previous: Vertex"
+          ],
+          "returns": "Vertex",
+          "summary": "Quét 81 đỉnh, trả về đỉnh chưa tô có độ bão hòa lớn nhất.",
+          "detail": "Bỏ qua `previous`. Với mỗi đỉnh chưa tô v: sat = size(forbiddenColors(v)). Giữ đỉnh có sat lớn hơn hẳn; khi bằng nhau áp dụng `tieBreak`. Nếu sat = 9 thì trả về ngay (đỉnh này sẽ hết màu, báo ngõ cụt càng sớm càng tốt). KHÔNG dừng sớm ở sat = 8 để giữ đúng định nghĩa DSATUR; có thể thử sau khi đo.",
+          "pre": [
+            "Như VertexSelector.select."
+          ],
+          "post": [
+            "Đỉnh chưa tô có độ bão hòa lớn nhất (hòa thì theo `tieBreak`), hoặc NO_VERTEX."
+          ],
+          "complexity": "O(81) mỗi lần gọi; mỗi đỉnh tốn 3 lần đọc, 2 OR và 1 popcount",
+          "perf": "Phần việc lặp 81 lần này là thành phần chính của mỗi nút trong quay lui DSATUR. Bản mẫu C++ (-O2) tốn trung bình khoảng 0,5 micro giây cho cả một nút trên đề Inkala (5,19 ms chia 10 101 nút); chưa tách riêng phần của bộ chọn. Giảm bằng cách dừng sớm ở sat = 9 và chỉ duyệt các đỉnh chưa tô. Hướng tối ưu thêm (chưa làm): giữ danh sách đỉnh chưa tô để không duyệt cả 81; không đưa vào thiết kế đầu vì chưa có số đo.",
+          "example": "Đề mẫu, phân phối độ bão hòa của 51 ô trống lúc đầu: độ 3 có 1 ô, độ 4 có 2 ô, độ 5 có 14 ô, độ 6 có 17 ô, độ 7 có 13 ô, độ 8 có 4 ô. Bộ chọn trả về ô 40, có tập ứng viên {5} (nước đi bắt buộc)."
+        },
+        {
+          "name": "name",
+          "vis": "+",
+          "params": [],
+          "returns": "String",
+          "summary": "Trả về «max-saturation».",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Chuỗi không rỗng."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        }
+      ],
+      "impl": {
+        "cpp": "Lớp `final` kế thừa VertexSelector. Vòng lặp 81 lần dùng `std::popcount` trên `uint16_t` đã OR; hoàn toàn có thể được trình biên dịch tự động vector hóa một phần.",
+        "python": "Viết vòng lặp tường minh với biến cục bộ cho `board.colors`, `board.used`, `graph.clique_of`; dùng `int.bit_count()`."
+      },
+      "notes": [
+        "Bản mẫu Python (đề «world's hardest» của Inkala): luật hòa MOST_UNCOLORED_NEIGHBORS giảm số nút từ 10 101 xuống 9 171 (giảm khoảng 9%) nhưng thời gian mỗi lần giải tăng từ 194 ms lên 474 ms. Chưa đo trên C++, nên mặc định là LOWEST_INDEX và để đo sau."
+      ],
+      "read": 9,
+      "stage": 2,
+      "readWhy": "DSATUR: lõi của hướng A. Dùng độ bão hòa tính từ Board và luật hòa TieBreak.",
+      "pos": [
+        2357,
+        752
+      ]
+    },
+    {
+      "id": "TieBreak",
+      "stereotype": "enum",
+      "package": "search",
+      "status": "core",
+      "summary": "Luật hòa của DSATUR.",
+      "role": "Chọn cách quyết định khi nhiều đỉnh chưa tô có cùng độ bão hòa lớn nhất.",
+      "graph": "Luật hòa gốc của DSATUR (Brélaz) là «bậc lớn nhất trong đồ thị con của các đỉnh chưa tô».",
+      "invariants": [],
+      "attributes": [],
+      "methods": [],
+      "values": [
+        {
+          "name": "LOWEST_INDEX",
+          "meaning": "Hòa thì lấy đỉnh có chỉ số nhỏ nhất. Rẻ nhất, tương đương MRV chuẩn. Là mặc định."
+        },
+        {
+          "name": "MOST_UNCOLORED_NEIGHBORS",
+          "meaning": "Hòa thì lấy đỉnh có nhiều đỉnh kề chưa tô nhất (luật gốc của DSATUR); còn hòa nữa thì lấy chỉ số nhỏ nhất. Mỗi lần so sánh tốn thêm khoảng 20 lần đọc."
+        }
+      ],
+      "impl": {
+        "cpp": "`enum class TieBreak : std::uint8_t { LowestIndex, MostUncoloredNeighbors };` (hoặc theo quy ước đặt tên C++ sẽ chốt).",
+        "python": "`enum.Enum`."
+      },
+      "notes": [
+        "Kết quả tô màu tham lam DSATUR đã đo trên đồ thị rỗng (10 màu) dùng luật hòa MOST_UNCOLORED_NEIGHBORS rồi chỉ số nhỏ nhất (walkthrough-bat-dau-ke-hoach.md mục 2)."
+      ],
+      "read": 8,
+      "stage": 2,
+      "readWhy": "Luật hòa của DSATUR; cần biết trước khi đọc MaxSaturationSelector.",
+      "pos": [
+        2612,
+        1008
+      ]
+    },
+    {
+      "id": "Solver",
+      "stereotype": "abstract",
+      "package": "solvers",
+      "status": "core",
+      "summary": "Máy trạng thái chạy từng bước, giao diện chung của mọi thuật toán giải.",
+      "role": "Định nghĩa vòng đời của một lần giải: `begin` dựng trạng thái, `step` thực hiện đúng MỘT thay đổi của bảng (tô hoặc bỏ một đỉnh) hoặc kết thúc, `isFinished` và `result` cho biết kết quả. `solve` là đường chạy trọn vẹn không có sự kiện, dùng cho thực nghiệm và là đường nhanh nhất. Giao diện đồ họa dùng `step` để hiện từng bước.",
+      "graph": "Một thuật toán tô màu đồ thị: nhận phép tô màu một phần, mở rộng bằng 9 màu thành phép tô màu hợp lệ toàn bộ nếu có.",
+      "invariants": [
+        "S1. Sau `begin`, `isFinished()` chỉ đúng khi đề không hợp lệ.",
+        "S2. Mỗi lần `step` làm đổi `board()` không quá một đỉnh.",
+        "S3. Sau khi `isFinished()` đúng, `board()` và `stats()` không đổi nữa; gọi `step` thêm trả về FINISHED mà không làm gì."
+      ],
+      "attributes": [
+        {
+          "name": "selector",
+          "type": "VertexSelector",
+          "vis": "#",
+          "summary": "Chiến lược chọn đỉnh được tiêm vào khi tạo bộ giải.",
+          "detail": "Giữ trong suốt đời bộ giải. Hai bộ giải có thể dùng chung một bộ chọn vì nó không có trạng thái."
+        },
+        {
+          "name": "board",
+          "type": "Optional<Board>",
+          "vis": "#",
+          "summary": "Bảng làm việc của lần giải hiện tại, tạo ở `begin`.",
+          "detail": "Sở hữu bởi bộ giải. Truy cập chỉ đọc từ bên ngoài qua `board()`."
+        },
+        {
+          "name": "limits",
+          "type": "SolveLimits",
+          "vis": "#",
+          "summary": "Giới hạn của lần giải hiện tại, nhận ở `begin`.",
+          "example": "`maxNodes = 0` nghĩa là không giới hạn số nút."
+        },
+        {
+          "name": "stats",
+          "type": "SearchStats",
+          "vis": "#",
+          "summary": "Bộ đếm của lần giải hiện tại; `stats()` trả về nó và `result()` sao chép nó vào kết quả.",
+          "detail": "Được đặt về 0 ở `begin`."
+        },
+        {
+          "name": "lastEvent",
+          "type": "StepEvent",
+          "vis": "#",
+          "summary": "Sự kiện của lần thay đổi bảng gần nhất; `step()` trả về nó.",
+          "detail": "Mỗi lần thay đổi bảng chỉ ghi ba byte; `solve()` bỏ qua giá trị này."
+        },
+        {
+          "name": "finished",
+          "type": "bool",
+          "vis": "#",
+          "summary": "Cờ kết thúc; `isFinished()` trả về nó."
+        }
+      ],
+      "methods": [
+        {
+          "name": "Solver",
+          "ctor": true,
+          "vis": "#",
+          "params": [
+            "selector: VertexSelector"
+          ],
+          "returns": "",
+          "summary": "Tạo bộ giải dùng chiến lược chọn đỉnh đã cho.",
+          "detail": "Hàm dựng của lớp trừu tượng nên chỉ lớp con gọi được (mức truy cập protected).",
+          "pre": [
+            "`selector` không rỗng."
+          ],
+          "post": [
+            "Bộ giải chưa chạy: `isFinished()` chưa có nghĩa cho tới khi gọi `begin`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần cho mỗi bộ giải; không nằm trong vòng lặp nóng.",
+          "cpp": "Hàm dựng `protected`; nhận con trỏ thông minh hoặc tham chiếu tới bộ chọn.",
+          "python": "`__init__(self, selector)`."
+        },
+        {
+          "name": "begin",
+          "abstract": true,
+          "vis": "+",
+          "params": [
+            "puzzle: Puzzle",
+            "limits: SolveLimits"
+          ],
+          "returns": "void",
+          "summary": "Chuẩn bị một lần giải mới: dựng bảng từ đề, đặt lại thống kê.",
+          "detail": "Nếu các ô cho sẵn xung đột thì kết thúc ngay với `INVALID_PUZZLE`. Có thể gọi lại `begin` để dùng lại bộ giải cho đề khác.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Hoặc đã kết thúc với INVALID_PUZZLE, hoặc sẵn sàng cho `step`.",
+            "`stats()` được đặt về 0."
+          ],
+          "complexity": "O(81)",
+          "perf": "Một lần cho mỗi đề."
+        },
+        {
+          "name": "step",
+          "abstract": true,
+          "vis": "+",
+          "params": [],
+          "returns": "StepEvent",
+          "summary": "Thực hiện đúng một thay đổi bảng (hoặc kết thúc) và trả về sự kiện mô tả.",
+          "detail": "Quyết định nội bộ không làm đổi bảng (chọn đỉnh, phát hiện ngõ cụt) được gộp vào bước kế tiếp để mỗi `step` đều là một chuyển động nhìn thấy được trên bảng.",
+          "pre": [
+            "Đã gọi `begin`."
+          ],
+          "post": [
+            "Sự kiện trả về mô tả thay đổi vừa làm.",
+            "Nếu kết thúc thì `isFinished()` đúng."
+          ],
+          "complexity": "Phụ thuộc lớp con",
+          "perf": "Đường dùng cho giao diện. Đường chạy nhanh là `solve` (xem bên dưới).",
+          "example": "Đề mẫu với DSATUR: bước đầu tiên trả về sự kiện ASSIGN với vertex = 40 và color = 5."
+        },
+        {
+          "name": "isFinished",
+          "vis": "+",
+          "params": [],
+          "returns": "bool",
+          "summary": "Lần giải đã kết thúc chưa (trả về cờ `finished`).",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Không có thay đổi trạng thái."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần đọc cờ."
+        },
+        {
+          "name": "result",
+          "vis": "+",
+          "params": [],
+          "returns": "SolveResult",
+          "summary": "Kết quả của lần giải đã kết thúc (lớp con ghép thêm lời giải và số lời giải).",
+          "pre": [
+            "`isFinished()` đúng."
+          ],
+          "post": [
+            "Chứa trạng thái, lời giải (nếu có), thống kê và thời gian."
+          ],
+          "complexity": "O(81) khi cần sao chép lời giải",
+          "perf": "Một lần cho mỗi đề.",
+          "abstract": true
+        },
+        {
+          "name": "solve",
+          "vis": "+",
+          "params": [
+            "puzzle: Puzzle",
+            "limits: SolveLimits"
+          ],
+          "returns": "SolveResult",
+          "summary": "Chạy trọn vẹn từ `begin` đến hết và trả về kết quả; đường nhanh cho thực nghiệm.",
+          "detail": "Mặc định cài bằng vòng lặp gọi `step`. Lớp con SHOULD ghi đè bằng một vòng lặp trong đó gọi hàm nội bộ không ảo `advance()` trực tiếp (không tạo sự kiện), để tránh một lời gọi hàm ảo cho mỗi nút. Đồng hồ đo thời gian chỉ bao quanh vòng lặp này.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Kết quả bằng kết quả khi gọi `begin` rồi `step` đến khi `isFinished()`, trừ `elapsedNanos` chỉ có ý nghĩa ở đây."
+          ],
+          "complexity": "Phụ thuộc đề và thuật toán",
+          "perf": "Đường nóng. Chỉ một lời gọi ảo cho mỗi đề, không phải mỗi nút.",
+          "example": "Đề mẫu, DSATUR: `solve` trả về SOLVED với 51 nút, 0 lần quay lui."
+        },
+        {
+          "name": "board",
+          "vis": "+",
+          "params": [],
+          "returns": "Board",
+          "summary": "Bảng làm việc hiện tại, chỉ đọc (cho giao diện).",
+          "pre": [
+            "Đã gọi `begin`."
+          ],
+          "post": [
+            "Không sửa được bảng qua giá trị trả về."
+          ],
+          "complexity": "O(1)",
+          "perf": "Trả về tham chiếu hằng, không sao chép."
+        },
+        {
+          "name": "stats",
+          "vis": "+",
+          "params": [],
+          "returns": "SearchStats",
+          "summary": "Bộ đếm thống kê hiện tại (cho giao diện hiện số liệu trực tiếp).",
+          "pre": [
+            "Đã gọi `begin`."
+          ],
+          "post": [
+            "Không sửa được qua giá trị trả về."
+          ],
+          "complexity": "O(1)",
+          "perf": "Trả về tham chiếu hằng."
+        },
+        {
+          "name": "name",
+          "vis": "+",
+          "params": [],
+          "returns": "String",
+          "summary": "Tên hiển thị gồm kiểu bộ giải và tên chiến lược.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Chuỗi không rỗng."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng.",
+          "example": "«backtracking + max-saturation»."
+        }
+      ],
+      "impl": {
+        "cpp": "Lớp cơ sở trừu tượng. Chỉ `begin`, `step` là hàm ảo thuần túy; `solve` ảo để lớp con ghi đè. Không dùng đa kế thừa.",
+        "python": "`abc.ABC`. Với Python, `solve` mặc định (gọi `step` lặp) đã khá chậm; lớp con nên tự viết vòng lặp trong."
+      },
+      "notes": [
+        "Thiết kế mẫu «Strategy + Template Method»: Strategy là `VertexSelector`; Template Method là bộ khung `begin`/`step`/`solve` của lớp cơ sở.",
+        "Đo thời gian trong chế độ từng bước không có nghĩa (có thời gian chờ của người dùng), nên `elapsedNanos` chỉ do `solve` điền."
+      ],
+      "read": 16,
+      "stage": 4,
+      "readWhy": "Đọc sau các lớp dữ liệu ở trên vì Solver dùng Puzzle, Board, VertexSelector, SolveLimits, SearchStats, SolveResult và StepEvent.",
+      "pos": [
+        1335,
+        765
+      ]
+    },
+    {
+      "id": "BacktrackingSolver",
+      "stereotype": "class",
+      "package": "solvers",
+      "status": "core",
+      "summary": "Quay lui chính xác bằng ngăn xếp tường minh: thử từng màu còn dùng được, gặp ngõ cụt thì lùi.",
+      "role": "Hướng A. Với `FirstUncoloredSelector` là quay lui thường (mục 5.1); với `MaxSaturationSelector` là quay lui DSATUR/MRV (mục 5.2). Cài đặt bằng vòng lặp với một mảng khung cố định, không đệ quy và không cấp phát trong lúc chạy. Đếm được nhiều lời giải (kiểm tra tính duy nhất).",
+      "graph": "Tìm kiếm có quay lui trên cây các phép tô màu một phần: mỗi nút là một lần tô, ngõ cụt là đỉnh không còn màu hợp lệ.",
+      "invariants": [
+        "B1. Khung 0..depth−1 có `vertex` đang được tô trên bảng; các đỉnh của các khung đều khác nhau và là đỉnh chưa tô lúc đầu.",
+        "B2. `remaining` của một khung chỉ chứa các màu chưa thử ở đỉnh đó và nằm trong tập ứng viên lúc chọn.",
+        "B3. Khi giai đoạn là SELECT, bảng chứa đúng các ô cho sẵn và các ô của khung 0..depth−1."
+      ],
+      "attributes": [
+        {
+          "name": "frames",
+          "type": "Array<SearchFrame, 81>",
+          "vis": "-",
+          "summary": "Ngăn xếp khung tìm kiếm cố định 81 phần tử.",
+          "detail": "Độ sâu tối đa là số đỉnh chưa tô, không quá 81, nên không bao giờ phải cấp phát thêm.",
+          "cpp": "`std::array<SearchFrame, 81>` trên đối tượng.",
+          "python": "Hai danh sách song song `frame_vertex`, `frame_remaining` độ dài 81 nhanh hơn danh sách đối tượng."
+        },
+        {
+          "name": "depth",
+          "type": "int",
+          "vis": "-",
+          "summary": "Số khung đang có trên ngăn xếp.",
+          "example": "Đề mẫu với DSATUR: sau bước cuối depth = 51."
+        },
+        {
+          "name": "phase",
+          "type": "SearchPhase",
+          "vis": "-",
+          "summary": "Giai đoạn tiếp theo của máy trạng thái: SELECT, TRY hoặc BACKTRACK.",
+          "detail": "SearchPhase là kiểu liệt kê riêng tư của lớp này (SELECT, TRY, BACKTRACK); được vẽ thành một thẻ để mọi kiểu trong chữ ký đều có định nghĩa."
+        },
+        {
+          "name": "solutionCount",
+          "type": "int",
+          "vis": "-",
+          "summary": "Số lời giải đã tìm thấy."
+        },
+        {
+          "name": "firstSolution",
+          "type": "Optional<Array<Color, 81>>",
+          "vis": "-",
+          "summary": "Lời giải đầu tiên (bản sao), nếu có."
+        },
+        {
+          "name": "exhausted",
+          "type": "bool",
+          "vis": "-",
+          "summary": "Đã duyệt hết không gian tìm kiếm chưa (lùi về gốc).",
+          "detail": "Cần để khẳng định «không có lời giải» hoặc «lời giải là duy nhất»."
+        }
+      ],
+      "methods": [
+        {
+          "name": "BacktrackingSolver",
+          "ctor": true,
+          "vis": "+",
+          "params": [
+            "selector: VertexSelector"
+          ],
+          "returns": "",
+          "summary": "Tạo bộ giải quay lui dùng bộ chọn đỉnh đã cho.",
+          "detail": "Bộ chọn quyết định đây là quay lui thường (`FirstUncoloredSelector`) hay quay lui DSATUR (`MaxSaturationSelector`).",
+          "pre": [
+            "`selector` không rỗng."
+          ],
+          "post": [
+            "Mảng khung được cấp phát đúng một lần (81 phần tử); chưa có lần giải nào."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần cho mỗi bộ giải; không nằm trong vòng lặp nóng.",
+          "cpp": "`explicit BacktrackingSolver(std::unique_ptr<VertexSelector> selector);` hoặc nhận tham chiếu nếu bộ chọn sống lâu hơn bộ giải.",
+          "python": "`__init__(self, selector)`."
+        },
+        {
+          "name": "begin",
+          "vis": "+",
+          "params": [
+            "puzzle: Puzzle",
+            "limits: SolveLimits"
+          ],
+          "returns": "void",
+          "summary": "Dựng bảng, đặt phase = SELECT, depth = 0, xóa thống kê.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Như Solver.begin."
+          ],
+          "complexity": "O(81)",
+          "perf": "Một lần cho mỗi đề."
+        },
+        {
+          "name": "step",
+          "vis": "+",
+          "params": [],
+          "returns": "StepEvent",
+          "summary": "Gọi `advance()` một lần và trả về `lastEvent`.",
+          "pre": [
+            "Đã gọi `begin`."
+          ],
+          "post": [
+            "Như Solver.step."
+          ],
+          "complexity": "Như `advance`",
+          "perf": "Một lời gọi ảo mỗi lần; dùng cho giao diện."
+        },
+        {
+          "name": "solve",
+          "vis": "+",
+          "params": [
+            "puzzle: Puzzle",
+            "limits: SolveLimits"
+          ],
+          "returns": "SolveResult",
+          "summary": "Đo thời gian quanh `begin` và vòng lặp `while (!finished) advance()`.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Như Solver.solve."
+          ],
+          "complexity": "Theo cây tìm kiếm",
+          "perf": "Đường nóng: gọi trực tiếp `advance()` không ảo nên được nội tuyến.",
+          "example": "Đề mẫu: quay lui thường tốn 4 208 nút và 4 157 lần quay lui; quay lui DSATUR tốn 51 nút và 0 lần quay lui (bản mẫu Python; số đếm không phụ thuộc ngôn ngữ). Đề «Inkala»: DSATUR tốn 10 101 nút."
+        },
+        {
+          "name": "advance",
+          "vis": "#",
+          "params": [],
+          "returns": "void",
+          "summary": "Chạy máy trạng thái SELECT/TRY/BACKTRACK cho đến khi có một thay đổi bảng hoặc kết thúc.",
+          "detail": "Mã giả đầy đủ ở mục 8.1 của `Walkthrough/walkthrough-thiet-ke-engine.md`. Tóm tắt: SELECT chọn đỉnh bằng bộ chọn và đẩy khung (hoặc phát hiện ngõ cụt); TRY lấy màu nhỏ nhất còn lại của khung trên cùng và `assign`; BACKTRACK `unassign` đỉnh của khung trên cùng rồi hoặc thử màu kế tiếp hoặc bỏ khung. Các chuyển trạng thái không đổi bảng (chọn đỉnh, ngõ cụt) lặp bên trong, không trả về.",
+          "pre": [
+            "Chưa kết thúc."
+          ],
+          "post": [
+            "`lastEvent` ghi sự kiện.",
+            "Bảng đổi không quá một đỉnh.",
+            "Thống kê cập nhật."
+          ],
+          "complexity": "O(81) cho mỗi nút khi dùng DSATUR (do bộ chọn), O(1) khi dùng thứ tự cố định",
+          "perf": "Hàm nóng nhất của engine. Chỉ dùng mảng cố định, không cấp phát, không ngoại lệ. Cập nhật bộ đếm là các phép cộng đơn giản. Ghi `lastEvent` là 3 phép ghi nhỏ cho mỗi nút."
+        },
+        {
+          "name": "result",
+          "vis": "+",
+          "params": [],
+          "returns": "SolveResult",
+          "summary": "Ghép trạng thái, lời giải đầu, số lời giải, cờ `exhausted` và thống kê.",
+          "pre": [
+            "`isFinished()` đúng."
+          ],
+          "post": [
+            "Như Solver.result."
+          ],
+          "complexity": "O(1) (lời giải đầu đã được sao khi tìm thấy)",
+          "perf": "Một lần cho mỗi đề."
+        }
+      ],
+      "impl": {
+        "cpp": "`class BacktrackingSolver final : public Solver`. `advance` là hàm không ảo (private/protected) nằm trong header hoặc cùng đơn vị dịch với `solve`. Dùng `ColorSet::lowest` để lấy màu nhỏ nhất của `remaining`.",
+        "python": "Đặt toàn bộ máy trạng thái trong `advance` với biến cục bộ cho `board.colors` và `board.used`. Cách này nhanh nhất mà vẫn giữ lớp rõ ràng."
+      },
+      "notes": [
+        "Thứ tự thử màu cố định: tăng dần theo `ColorSet.lowest`. Thứ tự này không phải thuật toán thông minh nhưng đủ cho hướng A (so sánh hai bộ chọn đỉnh).",
+        "Giới hạn lời giải: `solutionLimit = 2` dùng để kiểm tra tính duy nhất của đề.",
+        "Đã kiểm chứng bằng bản mẫu: đề mẫu có đúng 1 lời giải; đề gần rỗng có ít nhất 2; đề có hai chữ số 5 cùng hàng báo INVALID_PUZZLE; đề không có lời giải báo UNSOLVABLE."
+      ],
+      "read": 19,
+      "stage": 4,
+      "readWhy": "Hướng A: máy trạng thái SELECT, TRY, BACKTRACK. Đọc cùng mã giả ở mục 8.1 của walkthrough-thiet-ke-engine.md.",
+      "pos": [
+        1796,
+        209
+      ]
+    },
+    {
+      "id": "GreedyColoringSolver",
+      "stereotype": "class",
+      "package": "solvers",
+      "status": "core",
+      "summary": "Tô màu tham lam không quay lui: chọn đỉnh, tô màu nhỏ nhất còn dùng được; hết màu thì dừng thất bại.",
+      "role": "Hướng B, làm mốc so sánh. Mỗi đỉnh chỉ được xét một lần; không bao giờ bỏ màu đã tô. Nếu một đỉnh hết màu (cả 9 màu bị cấm) thì dừng với `STUCK`. Với `FirstUncoloredSelector` là tham lam theo thứ tự cố định; với `MaxSaturationSelector` là DSATUR tham lam (Brélaz).",
+      "graph": "Thuật toán tô màu đồ thị tham lam (greedy) và DSATUR gốc. Không bảo đảm tìm được phép tô hợp lệ bằng 9 màu: nó cho biết giới hạn của heuristic không có quay lui.",
+      "invariants": [
+        "Y1. Không bao giờ gọi `unassign`: `backtracks` luôn bằng 0.",
+        "Y2. Số nút bằng số đỉnh đã tô thêm vào."
+      ],
+      "attributes": [
+        {
+          "name": "previous",
+          "type": "Vertex",
+          "vis": "-",
+          "summary": "Đỉnh vừa chọn ở bước trước, đưa cho bộ chọn làm gợi ý."
+        }
+      ],
+      "methods": [
+        {
+          "name": "GreedyColoringSolver",
+          "ctor": true,
+          "vis": "+",
+          "params": [
+            "selector: VertexSelector"
+          ],
+          "returns": "",
+          "summary": "Tạo bộ giải tô màu tham lam dùng bộ chọn đỉnh đã cho.",
+          "detail": "Với `FirstUncoloredSelector` là tham lam theo thứ tự cố định; với `MaxSaturationSelector` là DSATUR tham lam.",
+          "pre": [
+            "`selector` không rỗng."
+          ],
+          "post": [
+            "Chưa có lần giải nào."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần cho mỗi bộ giải; không nằm trong vòng lặp nóng.",
+          "cpp": "`explicit GreedyColoringSolver(std::unique_ptr<VertexSelector> selector);`",
+          "python": "`__init__(self, selector)`."
+        },
+        {
+          "name": "begin",
+          "vis": "+",
+          "params": [
+            "puzzle: Puzzle",
+            "limits: SolveLimits"
+          ],
+          "returns": "void",
+          "summary": "Dựng bảng, đặt `previous = NO_VERTEX`.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Như Solver.begin."
+          ],
+          "complexity": "O(81)",
+          "perf": "Một lần cho mỗi đề."
+        },
+        {
+          "name": "step",
+          "vis": "+",
+          "params": [],
+          "returns": "StepEvent",
+          "summary": "Chọn đỉnh; nếu bảng đầy thì ghi lời giải và kết thúc SOLVED; nếu hết màu thì kết thúc STUCK; ngược lại tô màu nhỏ nhất còn dùng được.",
+          "detail": "Mã giả ở mục 8.2 của `Walkthrough/walkthrough-thiet-ke-engine.md`. Mỗi lần gọi tô đúng một đỉnh hoặc kết thúc.",
+          "pre": [
+            "Đã gọi `begin`."
+          ],
+          "post": [
+            "Như Solver.step."
+          ],
+          "complexity": "Như bộ chọn",
+          "perf": "Dùng cho giao diện.",
+          "example": "Đề mẫu, thứ tự cố định: tô ô 2 màu 1, ô 3 màu 2, ô 5 màu 4, ô 6 màu 8, ô 7 màu 9; ở ô 8 cả chín màu đã bị cấm nên dừng với STUCK sau 5 nút. Đề mẫu, DSATUR tham lam: tô 51 ô, SOLVED."
+        },
+        {
+          "name": "solve",
+          "vis": "+",
+          "params": [
+            "puzzle: Puzzle",
+            "limits: SolveLimits"
+          ],
+          "returns": "SolveResult",
+          "summary": "Chạy trọn vẹn không sinh sự kiện.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Như Solver.solve."
+          ],
+          "complexity": "O(nút × chi phí bộ chọn)",
+          "perf": "Đường nóng; vòng lặp nội bộ không ảo."
+        },
+        {
+          "name": "advance",
+          "vis": "#",
+          "params": [],
+          "returns": "void",
+          "summary": "Một nút của thuật toán tham lam.",
+          "pre": [
+            "Chưa kết thúc."
+          ],
+          "post": [
+            "Tô thêm đúng một đỉnh hoặc kết thúc."
+          ],
+          "complexity": "Như bộ chọn",
+          "perf": "Hàm nóng; không cấp phát."
+        },
+        {
+          "name": "result",
+          "vis": "+",
+          "params": [],
+          "returns": "SolveResult",
+          "summary": "Kết quả: SOLVED với lời giải, hoặc STUCK với số nút đã tô được.",
+          "pre": [
+            "`isFinished()` đúng."
+          ],
+          "post": [
+            "Như Solver.result."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần cho mỗi đề."
+        }
+      ],
+      "impl": {
+        "cpp": "`class GreedyColoringSolver final : public Solver`.",
+        "python": "Lớp con của Solver; vòng lặp gọn."
+      },
+      "notes": [
+        "Khác với số «14 màu» và «10 màu» đã đo ở walkthrough-bat-dau-ke-hoach.md: các số đó là số màu tham lam cần trên đồ thị RỖNG khi không giới hạn 9 màu, do `GraphAnalyzer` (tùy chọn) đo. Bộ giải này bị giới hạn 9 màu nên đo «tỉ lệ thành công» thay vì «số màu»."
+      ],
+      "read": 20,
+      "stage": 4,
+      "readWhy": "Hướng B: bản đơn giản hơn của BacktrackingSolver, không quay lui.",
+      "pos": [
+        1339,
+        1226
+      ]
+    },
+    {
+      "id": "SearchFrame",
+      "stereotype": "value",
+      "package": "solvers",
+      "status": "core",
+      "summary": "Một khung của ngăn xếp tìm kiếm: đỉnh đang xử lý và các màu chưa thử.",
+      "role": "Thay cho một lần gọi đệ quy. Giữ đủ thông tin để thử màu kế tiếp sau khi quay lui.",
+      "graph": "Một nút của cây tìm kiếm tại đỉnh v: các nhánh con là các màu trong tập ứng viên.",
+      "invariants": [
+        "F1. `remaining` luôn là tập con của tập ứng viên lúc chọn đỉnh."
+      ],
+      "attributes": [
+        {
+          "name": "vertex",
+          "type": "Vertex",
+          "vis": "+",
+          "summary": "Đỉnh đang xử lý ở khung này.",
+          "example": "Khung đầu tiên của DSATUR trên đề mẫu: vertex = 40."
+        },
+        {
+          "name": "remaining",
+          "type": "ColorSet",
+          "vis": "+",
+          "summary": "Các màu chưa thử ở đỉnh này.",
+          "detail": "Ban đầu bằng `availableColors(vertex)`. Mỗi lần thử, màu nhỏ nhất bị bỏ khỏi tập.",
+          "example": "Đỉnh có ứng viên {1, 2, 4}: remaining = 11 ban đầu; sau lần thử màu 1: 10; sau màu 2: 8."
+        }
+      ],
+      "methods": [],
+      "impl": {
+        "cpp": "`struct SearchFrame { std::uint8_t vertex; std::uint16_t remaining; };`",
+        "python": "Không tạo đối tượng; dùng hai danh sách song song `frame_vertex` và `frame_remaining` để nhanh."
+      },
+      "notes": [
+        "Trong sơ đồ giữ SearchFrame để mô tả dữ liệu. Python có thể không có lớp này."
+      ],
+      "read": 17,
+      "stage": 4,
+      "readWhy": "Dữ liệu của ngăn xếp tìm kiếm (dùng ColorSet); cần biết trước BacktrackingSolver.",
+      "pos": [
+        2214,
+        174
+      ]
+    },
+    {
+      "id": "SearchPhase",
+      "stereotype": "enum",
+      "package": "solvers",
+      "status": "core",
+      "summary": "Ba giai đoạn của máy trạng thái trong BacktrackingSolver: SELECT, TRY, BACKTRACK.",
+      "role": "Kiểu liệt kê riêng tư của `BacktrackingSolver`: cho biết lần `advance()` kế tiếp sẽ chọn đỉnh, tô màu hay lùi. Không lộ ra ngoài lớp; được vẽ thành một thẻ để mọi kiểu xuất hiện trong chữ ký đều có định nghĩa.",
+      "graph": "Ba trạng thái của vòng lặp tìm kiếm có quay lui.",
+      "invariants": [],
+      "attributes": [],
+      "methods": [],
+      "values": [
+        {
+          "name": "SELECT",
+          "meaning": "Kế tiếp là chọn đỉnh chưa tô và đẩy một khung lên ngăn xếp (chưa đổi bảng)."
+        },
+        {
+          "name": "TRY",
+          "meaning": "Kế tiếp là tô màu nhỏ nhất chưa thử của khung trên cùng (đổi bảng bằng `assign`)."
+        },
+        {
+          "name": "BACKTRACK",
+          "meaning": "Kế tiếp là bỏ màu của khung trên cùng (đổi bảng bằng `unassign`) rồi thử màu khác hoặc bỏ khung."
+        }
+      ],
+      "impl": {
+        "cpp": "`enum class SearchPhase : std::uint8_t { Select, Try, Backtrack };` đặt trong phần riêng tư của lớp.",
+        "python": "`enum.IntEnum` hoặc ba hằng số nguyên cấp module."
+      },
+      "notes": [
+        "Mã giả của ba giai đoạn nằm ở mục 8.1 của `Walkthrough/walkthrough-thiet-ke-engine.md`."
+      ],
+      "read": 18,
+      "stage": 4,
+      "readWhy": "Ba giai đoạn của máy trạng thái trong BacktrackingSolver; cần biết trước khi đọc mã giả của nó.",
+      "pos": [
+        2222,
+        476
+      ]
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "classes": [
+    {
+      "id": "GraphAnalyzer",
+      "stereotype": "utility",
+      "package": "analysis",
+      "status": "optional",
+      "summary": "Đo tính chất của đồ thị Sudoku và số màu của tô màu tham lam khi KHÔNG giới hạn 9 màu.",
+      "role": "Phục vụ phần báo cáo về lý thuyết đồ thị (đề xuất 1 và 2 của walkthrough-bat-dau-ke-hoach.md mục 3). Không nằm trong đường chạy của bộ giải. Hai hàm đếm màu dùng số nguyên rộng hơn 9 bit (cần tới 21 màu), nên không dùng `ColorSet`.",
+      "graph": "Các đại lượng của đồ thị: số đỉnh, số cạnh, bậc, clique cực đại, số sắc độ, giới hạn Δ + 1; số màu mà thuật toán tham lam cần.",
+      "invariants": [
+        "A1. Kết quả `properties` khớp với số liệu đã đo: 81, 810, bậc 20, 27 clique cỡ 9, χ = 9, Δ + 1 = 21."
+      ],
+      "attributes": [],
+      "methods": [
+        {
+          "name": "properties",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "graph: SudokuGraph"
+          ],
+          "returns": "GraphProperties",
+          "summary": "Tính các tính chất cơ bản của đồ thị từ chính cấu trúc đã dựng.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Các trường của kết quả tính lại từ bảng đỉnh kề và bảng nhóm, không lấy từ hằng số."
+          ],
+          "complexity": "O(81 × 20)",
+          "perf": "Một lần; không nằm trong vòng lặp nóng.",
+          "example": "Kết quả: vertexCount = 81, edgeCount = 810, regularDegree = 20, cliqueCount = 27, cliqueSize = 9, chromaticNumber = 9, maxDegreePlusOne = 21."
+        },
+        {
+          "name": "greedyColorCount",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "graph: SudokuGraph",
+            "order: List<Vertex>"
+          ],
+          "returns": "int",
+          "summary": "Số màu mà tô màu tham lam dùng khi tô đồ thị RỖNG theo thứ tự `order`, không giới hạn số màu.",
+          "detail": "Lần lượt từng đỉnh theo `order`, tô màu nhỏ nhất chưa xuất hiện ở các đỉnh kề đã tô.",
+          "pre": [
+            "`order` là hoán vị của 0..80."
+          ],
+          "post": [
+            "Số màu khác nhau đã dùng (≥ 9, ≤ 21)."
+          ],
+          "complexity": "O(81 × 20)",
+          "perf": "Một lần.",
+          "example": "Thứ tự 0, 1, ..., 80: 14 màu (đã đo)."
+        },
+        {
+          "name": "dsaturColorCount",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "graph: SudokuGraph",
+            "tieBreak: TieBreak"
+          ],
+          "returns": "int",
+          "summary": "Số màu mà DSATUR dùng khi tô đồ thị rỗng, không giới hạn số màu.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Số màu khác nhau đã dùng (≥ 9, ≤ 21)."
+          ],
+          "complexity": "O(81 × 81 × 20)",
+          "perf": "Một lần.",
+          "example": "Luật hòa MOST_UNCOLORED_NEIGHBORS rồi chỉ số nhỏ nhất: 10 màu (đã đo)."
+        }
+      ],
+      "impl": {
+        "cpp": "Hàm tĩnh dùng `std::uint32_t` làm tập màu (đủ cho 21 màu).",
+        "python": "Hàm module; `int` Python không bị giới hạn bit."
+      },
+      "notes": [
+        "Quang phổ của đồ thị (các giá trị riêng 20, 11, 5, 2, −1, −4) tính bằng script Python với numpy ngoài engine, vì không có lợi ích gì khi viết lại đại số tuyến tính trong C++.",
+        "Gói này là đề xuất, chưa chốt: giữ nó ở trạng thái tùy chọn trong sơ đồ để phần còn lại không phụ thuộc vào nó."
+      ],
+      "read": 30,
+      "stage": 6,
+      "readWhy": "Phân tích đồ thị và đếm số màu của tham lam (tùy chọn).",
+      "pos": [
+        2602,
+        1400
+      ]
+    },
+    {
+      "id": "GraphProperties",
+      "stereotype": "value",
+      "package": "analysis",
+      "status": "optional",
+      "summary": "Các tính chất đồ thị Sudoku do `GraphAnalyzer` tính.",
+      "role": "Chỉ là dữ liệu cho báo cáo.",
+      "graph": "Bảng thông số của đồ thị Sudoku.",
+      "invariants": [
+        "H1. edgeCount = vertexCount × regularDegree / 2."
+      ],
+      "attributes": [
+        {
+          "name": "vertexCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số đỉnh.",
+          "example": "81."
+        },
+        {
+          "name": "edgeCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số cạnh.",
+          "example": "810."
+        },
+        {
+          "name": "regularDegree",
+          "type": "int",
+          "vis": "+",
+          "summary": "Bậc chung của mọi đỉnh; −1 nếu đồ thị không thuần nhất bậc.",
+          "example": "20."
+        },
+        {
+          "name": "cliqueCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số clique cực đại.",
+          "example": "27."
+        },
+        {
+          "name": "cliqueSize",
+          "type": "int",
+          "vis": "+",
+          "summary": "Kích thước clique cực đại.",
+          "example": "9."
+        },
+        {
+          "name": "chromaticNumber",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số sắc độ: số màu nhỏ nhất để tô hợp lệ.",
+          "detail": "Bằng 9: cận dưới là kích thước clique, và có phép tô 9 màu hợp lệ (một lời giải Sudoku).",
+          "example": "9."
+        },
+        {
+          "name": "maxDegreePlusOne",
+          "type": "int",
+          "vis": "+",
+          "summary": "Δ + 1: số màu mà tham lam theo thứ tự bất kỳ luôn đủ.",
+          "example": "21."
+        }
+      ],
+      "methods": [],
+      "impl": {
+        "cpp": "`struct GraphProperties`.",
+        "python": "`@dataclass(frozen=True, slots=True)`."
+      },
+      "notes": [],
+      "read": 29,
+      "stage": 6,
+      "readWhy": "Các tính chất đồ thị Sudoku do GraphAnalyzer tính (tùy chọn).",
+      "pos": [
+        3020,
+        1480
+      ]
+    }
+  ]
+}

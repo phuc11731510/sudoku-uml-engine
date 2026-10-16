@@ -1,0 +1,598 @@
+{
+  "classes": [
+    {
+      "id": "SolverFactory",
+      "stereotype": "utility",
+      "package": "support",
+      "status": "support",
+      "summary": "Tạo bộ giải theo tên: ghép một loại bộ giải với một bộ chọn đỉnh.",
+      "role": "Điểm duy nhất biết «quay lui thường = BacktrackingSolver + FirstUncoloredSelector», «DSATUR = BacktrackingSolver + MaxSaturationSelector», v.v. Giao diện đồ họa và chương trình thực nghiệm chỉ cần nói tên (SolverKind) và nhận về một Solver.",
+      "graph": "Danh mục các thuật toán tô màu mà đồ án so sánh.",
+      "invariants": [
+        "Z1. `allKinds()` trả về đúng các giá trị của SolverKind, theo thứ tự cố định."
+      ],
+      "attributes": [],
+      "methods": [
+        {
+          "name": "create",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "kind: SolverKind",
+            "tieBreak: TieBreak = LOWEST_INDEX"
+          ],
+          "returns": "Solver",
+          "summary": "Tạo một Solver mới (không dùng chung trạng thái với bộ giải khác).",
+          "detail": "Mỗi lần gọi trả về bộ giải mới để có thể chạy song song trên nhiều luồng. `tieBreak` chỉ có tác dụng với hai loại DSATUR.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Bộ giải sẵn sàng cho `begin`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng.",
+          "example": "`create(DSATUR_BACKTRACKING)` trả về một `BacktrackingSolver` đã được tạo bằng `MaxSaturationSelector` với luật hòa `LOWEST_INDEX`."
+        },
+        {
+          "name": "allKinds",
+          "static": true,
+          "vis": "+",
+          "params": [],
+          "returns": "List<SolverKind>",
+          "summary": "Danh sách mọi loại bộ giải (cho ô chọn của giao diện).",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Bốn giá trị."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        },
+        {
+          "name": "displayName",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "kind: SolverKind"
+          ],
+          "returns": "String",
+          "summary": "Tên ngắn để hiển thị.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Chuỗi không rỗng."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng.",
+          "example": "«Backtracking (DSATUR)»."
+        },
+        {
+          "name": "describe",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "kind: SolverKind"
+          ],
+          "returns": "String",
+          "summary": "Mô tả một hai câu về thuật toán (cho chú thích trên giao diện).",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Chuỗi không rỗng."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        }
+      ],
+      "impl": {
+        "cpp": "Lớp chỉ có hàm tĩnh, hoặc không gian tên với các hàm; trả về `std::unique_ptr<Solver>`.",
+        "python": "Module với các hàm, hoặc lớp có `@staticmethod`."
+      },
+      "notes": [
+        "Nếu thêm thuật toán mới (ví dụ hướng E tìm kiếm cục bộ), chỉ cần thêm một giá trị SolverKind và một nhánh trong `create`."
+      ],
+      "read": 22,
+      "stage": 5,
+      "readWhy": "Ghép loại bộ giải với bộ chọn đỉnh theo SolverKind.",
+      "pos": [
+        2182,
+        1084
+      ]
+    },
+    {
+      "id": "SolverKind",
+      "stereotype": "enum",
+      "package": "support",
+      "status": "support",
+      "summary": "Bốn bộ giải mà đồ án so sánh.",
+      "role": "Kiểu liệt kê dùng làm khóa chọn bộ giải.",
+      "graph": "Bốn thuật toán tô màu: hai bộ chính xác (hướng A), hai bộ tham lam (hướng B).",
+      "invariants": [],
+      "attributes": [],
+      "methods": [],
+      "values": [
+        {
+          "name": "PLAIN_BACKTRACKING",
+          "meaning": "BacktrackingSolver + FirstUncoloredSelector (mục 5.1)."
+        },
+        {
+          "name": "DSATUR_BACKTRACKING",
+          "meaning": "BacktrackingSolver + MaxSaturationSelector (mục 5.2, 5.8)."
+        },
+        {
+          "name": "GREEDY_FIXED_ORDER",
+          "meaning": "GreedyColoringSolver + FirstUncoloredSelector (mốc so sánh)."
+        },
+        {
+          "name": "GREEDY_DSATUR",
+          "meaning": "GreedyColoringSolver + MaxSaturationSelector (DSATUR gốc)."
+        }
+      ],
+      "impl": {
+        "cpp": "`enum class SolverKind`.",
+        "python": "`enum.Enum`."
+      },
+      "notes": [],
+      "read": 21,
+      "stage": 5,
+      "readWhy": "Bốn bộ giải của đồ án, dùng làm khóa chọn cho SolverFactory.",
+      "pos": [
+        2182,
+        1397
+      ]
+    },
+    {
+      "id": "SolutionVerifier",
+      "stereotype": "utility",
+      "package": "support",
+      "status": "support",
+      "summary": "Kiểm tra một lời giải từ đầu theo đúng định nghĩa: mọi đỉnh có màu, giữ ô cho sẵn, không cạnh nào hai đầu cùng màu.",
+      "role": "Bộ kiểm tra của engine, KHÔNG tin vào `Board` hay các mặt nạ: nó chỉ nhận mảng màu và đi qua 810 cạnh của đồ thị. Còn có một bộ kiểm tra độc lập bằng Python trong `tests/` (không import engine), để lỗi của engine không lặp lại ở bộ kiểm tra.",
+      "graph": "Kiểm tra định nghĩa «phép tô màu hợp lệ»: không có cạnh nào có hai đầu cùng màu, và mọi đỉnh đều có màu.",
+      "invariants": [
+        "Y1. `verify` không phụ thuộc vào bất kỳ trạng thái nào ngoài hai tham số."
+      ],
+      "attributes": [],
+      "methods": [
+        {
+          "name": "verify",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "puzzle: Puzzle",
+            "colors: Array<Color, 81>"
+          ],
+          "returns": "VerificationResult",
+          "summary": "Kiểm tra `colors` có phải lời giải hợp lệ của `puzzle`.",
+          "detail": "Thứ tự kiểm tra: (1) duyệt v từ 0 đến 80, gặp lỗi đầu tiên thì dừng: màu ngoài 0..9, đỉnh chưa tô, ô cho sẵn bị đổi; (2) duyệt 810 cạnh, gặp cạnh đầu tiên có hai đầu cùng màu thì dừng.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "`ok = true` khi mọi điều kiện thỏa; nếu không, `error` và đỉnh liên quan cho biết lỗi đầu tiên."
+          ],
+          "complexity": "O(81 + 810)",
+          "perf": "Chỉ gọi một lần cho mỗi lời giải, ngoài vòng lặp nóng. Chạy cả khi đo hiệu năng để chắc kết quả đúng, nhưng thời gian của nó không tính vào `elapsedNanos`.",
+          "example": "Đề mẫu và lời giải chuẩn: ok. Đổi một ô thành màu của ô cùng hàng: `ADJACENT_SAME_COLOR` kèm hai đỉnh. Đưa vào mảng còn ô 0: `UNCOLORED_VERTEX` với vertexA = ô đó."
+        }
+      ],
+      "impl": {
+        "cpp": "Hàm tĩnh hoặc hàm tự do; dùng `SudokuGraph::edges`.",
+        "python": "Hàm module."
+      },
+      "notes": [
+        "Hai lớp kiểm tra (trong engine và độc lập trong tests) kiểm chứng lẫn nhau."
+      ],
+      "read": 25,
+      "stage": 5,
+      "readWhy": "Kiểm tra lời giải từ đầu bằng 810 cạnh của SudokuGraph.",
+      "pos": [
+        1317,
+        1600
+      ]
+    },
+    {
+      "id": "VerificationResult",
+      "stereotype": "value",
+      "package": "support",
+      "status": "support",
+      "summary": "Kết quả kiểm tra: đúng hoặc sai kèm lý do và đỉnh liên quan.",
+      "role": "Chỉ là dữ liệu. Giao diện dùng `vertexA`, `vertexB` để tô sáng cạnh xung đột.",
+      "graph": "Cạnh vi phạm (nếu có): hai đầu cùng màu.",
+      "invariants": [
+        "W1. `ok` đúng khi và chỉ khi `error = NONE`."
+      ],
+      "attributes": [
+        {
+          "name": "ok",
+          "type": "bool",
+          "vis": "+",
+          "summary": "Lời giải hợp lệ."
+        },
+        {
+          "name": "error",
+          "type": "VerificationError",
+          "vis": "+",
+          "summary": "Lý do thất bại; NONE nếu ok."
+        },
+        {
+          "name": "vertexA",
+          "type": "Vertex",
+          "vis": "+",
+          "summary": "Đỉnh đầu tiên liên quan (hoặc NO_VERTEX).",
+          "example": "ADJACENT_SAME_COLOR: một đầu của cạnh xung đột."
+        },
+        {
+          "name": "vertexB",
+          "type": "Vertex",
+          "vis": "+",
+          "summary": "Đỉnh thứ hai của cạnh xung đột (hoặc NO_VERTEX).",
+          "example": "ADJACENT_SAME_COLOR: đầu còn lại."
+        }
+      ],
+      "methods": [
+        {
+          "name": "message",
+          "vis": "+",
+          "params": [],
+          "returns": "String",
+          "summary": "Câu mô tả lỗi cho người đọc.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Chuỗi không rỗng."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng.",
+          "example": "«Hai đỉnh kề nhau (0, 2) cùng màu 5»."
+        }
+      ],
+      "impl": {
+        "cpp": "`struct VerificationResult`.",
+        "python": "`@dataclass(frozen=True, slots=True)`."
+      },
+      "notes": [],
+      "read": 24,
+      "stage": 5,
+      "readWhy": "Kết quả kiểm tra; dùng VerificationError.",
+      "pos": [
+        1362,
+        1885
+      ]
+    },
+    {
+      "id": "VerificationError",
+      "stereotype": "enum",
+      "package": "support",
+      "status": "support",
+      "summary": "Các lý do một lời giải không hợp lệ.",
+      "role": "Kiểu liệt kê.",
+      "graph": "Mỗi giá trị vi phạm một điều kiện của định nghĩa phép tô màu hợp lệ.",
+      "invariants": [],
+      "attributes": [],
+      "methods": [],
+      "values": [
+        {
+          "name": "NONE",
+          "meaning": "Không có lỗi."
+        },
+        {
+          "name": "COLOR_OUT_OF_RANGE",
+          "meaning": "Có màu ngoài 0..9."
+        },
+        {
+          "name": "UNCOLORED_VERTEX",
+          "meaning": "Còn đỉnh có màu 0."
+        },
+        {
+          "name": "GIVEN_CHANGED",
+          "meaning": "Một ô cho sẵn của đề bị đổi màu."
+        },
+        {
+          "name": "ADJACENT_SAME_COLOR",
+          "meaning": "Có cạnh mà hai đầu cùng màu."
+        }
+      ],
+      "impl": {
+        "cpp": "`enum class VerificationError`.",
+        "python": "`enum.Enum`."
+      },
+      "notes": [],
+      "read": 23,
+      "stage": 5,
+      "readWhy": "Các lý do một lời giải bị coi là sai.",
+      "pos": [
+        945,
+        1862
+      ]
+    },
+    {
+      "id": "PuzzleSetReader",
+      "stereotype": "class",
+      "package": "support",
+      "status": "support",
+      "summary": "Đọc tập đề từ file văn bản, từng đề một (không nạp hết vào bộ nhớ).",
+      "role": "Đọc các tập đề dùng cho thực nghiệm. Là bộ lặp (iterator): trả về từng `Puzzle`, bỏ qua dòng trống và dòng chú thích bắt đầu bằng `#`. Phải đọc theo luồng vì có tập 175 MB (khoảng 2 triệu đề); nạp hết vào bộ nhớ dưới dạng đối tượng sẽ rất tốn, nhất là trong Python.",
+      "graph": "Nguồn các thể hiện bài toán tô màu mở rộng để so sánh thuật toán.",
+      "invariants": [
+        "D1. `lineNumber` luôn là số dòng của dòng vừa đọc, tính từ 1."
+      ],
+      "attributes": [
+        {
+          "name": "path",
+          "type": "String",
+          "vis": "-",
+          "readonly": true,
+          "summary": "Đường dẫn file đang đọc."
+        },
+        {
+          "name": "lineNumber",
+          "type": "int",
+          "vis": "-",
+          "summary": "Số dòng vừa đọc, để báo lỗi chính xác."
+        }
+      ],
+      "methods": [
+        {
+          "name": "open",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "path: String"
+          ],
+          "returns": "PuzzleSetReader",
+          "summary": "Mở file để đọc.",
+          "pre": [
+            "File tồn tại và đọc được."
+          ],
+          "post": [
+            "Sẵn sàng gọi `next`."
+          ],
+          "errors": "Ném lỗi hệ thống nếu không mở được file.",
+          "complexity": "O(1)",
+          "perf": "Một lần cho mỗi tập đề."
+        },
+        {
+          "name": "next",
+          "vis": "+",
+          "params": [],
+          "returns": "Optional<Puzzle>",
+          "summary": "Đọc đề kế tiếp; rỗng khi hết file.",
+          "detail": "Bỏ qua dòng trống và dòng bắt đầu bằng `#`; cắt dấu xuống dòng ở cuối (cả `\\n` và `\\r\\n`); dùng `Puzzle.fromString` cho phần còn lại. Dòng sai định dạng ném `PuzzleFormatError` kèm số dòng.",
+          "pre": [
+            "Chưa hết file."
+          ],
+          "post": [
+            "Trả về đề tiếp theo hoặc rỗng."
+          ],
+          "errors": "Ném `PuzzleFormatError` nếu một dòng đề sai định dạng.",
+          "complexity": "O(81) mỗi đề",
+          "perf": "Việc đọc dữ liệu chiếm thời gian khi đề dễ; không tính vào thời gian giải.",
+          "example": "Trong `puzzles0_kaggle`, hai dòng đầu là chú thích, dòng thứ ba là đề `.5..83.17...1..4..3...` (81 ký tự)."
+        },
+        {
+          "name": "close",
+          "vis": "+",
+          "params": [],
+          "returns": "void",
+          "summary": "Đóng file.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Không còn đọc được."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần."
+        }
+      ],
+      "impl": {
+        "cpp": "Giữ `std::ifstream`; cung cấp thêm `begin()/end()` nếu muốn dùng vòng lặp `for`.",
+        "python": "Cài `__iter__` và `__next__`, hoặc dùng generator."
+      },
+      "notes": [
+        "Đã xem vài dòng đầu của cả 9 tập trong `reference/tdoku/data.zip` ngày 2026-10-16: dòng chú thích bắt đầu bằng `#`; dòng đề dài 81 ký tự, ô trống là dấu chấm; tập `puzzles7_serg_benchmark` dùng kết thúc dòng `\\r\\n`; tập `puzzles8_gen_puzzles` có dòng chú thích `# ALLOWZERO`, gợi ý ký tự `0` cũng là ô trống. Chưa kiểm tra từng dòng của mỗi tập, và chưa kiểm tra giấy phép từng tập."
+      ],
+      "read": 26,
+      "stage": 5,
+      "readWhy": "Đọc tập đề từ file để chạy thực nghiệm.",
+      "pos": [
+        481,
+        1245
+      ]
+    },
+    {
+      "id": "BenchmarkRunner",
+      "stereotype": "utility",
+      "package": "support",
+      "status": "support",
+      "summary": "Chạy một bộ giải trên nhiều đề và tổng hợp số liệu.",
+      "role": "Khung thực nghiệm so sánh thuật toán: lặp qua các đề, gọi `solve`, kiểm tra lời giải bằng `SolutionVerifier`, rồi cộng dồn thống kê. Viết trong engine (không phải Python) để vòng lặp không bị chi phí của ngôn ngữ kịch bản khi dùng C++.",
+      "graph": "Phép đo so sánh các thuật toán tô màu trên cùng một tập thể hiện.",
+      "invariants": [
+        "N1. Mỗi lời giải do bộ giải trả về đều qua `SolutionVerifier.verify`; nếu có lỗi thì thực nghiệm dừng và báo, không ghi vào tổng hợp."
+      ],
+      "attributes": [],
+      "methods": [
+        {
+          "name": "run",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "solver: Solver",
+            "puzzles: Iterator<Puzzle>",
+            "limits: SolveLimits",
+            "maxPuzzles: int = 0"
+          ],
+          "returns": "BenchmarkSummary",
+          "summary": "Giải tối đa `maxPuzzles` đề (0 là hết nguồn) và trả về tổng hợp.",
+          "detail": "Với mỗi đề: `solver.solve(puzzle, limits)`; nếu SOLVED thì chạy `SolutionVerifier.verify` (ngoài phần đo thời gian); cộng `stats` và `elapsedNanos` vào tổng hợp; cập nhật đề khó nhất (nhiều nút nhất).",
+          "pre": [
+            "`maxPuzzles ≥ 0`."
+          ],
+          "post": [
+            "Tổng hợp phản ánh đúng các đề đã chạy."
+          ],
+          "complexity": "Tổng thời gian giải các đề",
+          "perf": "Thời gian đo bởi `solve` cho từng đề, không đo lại cả vòng lặp, nên chi phí kiểm tra và đọc file không lẫn vào kết quả.",
+          "example": "Chạy `DSATUR_BACKTRACKING` trên 1 000 đề đầu của tập Kaggle với `maxNodes = 1 000 000`."
+        }
+      ],
+      "impl": {
+        "cpp": "Hàm tĩnh nhận `PuzzleSetReader&` (hoặc khái niệm bộ lặp). Có thể chạy nhiều luồng với mỗi luồng một `Solver` riêng.",
+        "python": "Hàm module nhận một iterator; nếu engine là Python thì chỉ chạy được tốc độ của Python (xem mục 12 của `Walkthrough/walkthrough-thiet-ke-engine.md`)."
+      },
+      "notes": [
+        "Chưa có tùy chọn lưu kết quả từng đề; thêm khi báo cáo cần phân phối (histogram) số nút. Khi cần chỉ cần thêm tham số, không phải đổi lớp khác."
+      ],
+      "read": 28,
+      "stage": 5,
+      "readWhy": "Chạy một bộ giải trên nhiều đề; dùng hầu hết các lớp ở trên nên đọc gần cuối.",
+      "pos": [
+        904,
+        1089
+      ]
+    },
+    {
+      "id": "BenchmarkSummary",
+      "stereotype": "value",
+      "package": "support",
+      "status": "support",
+      "summary": "Số liệu tổng hợp của một lần chạy thực nghiệm.",
+      "role": "Chỉ là dữ liệu, dùng để lập bảng so sánh trong báo cáo.",
+      "graph": "Số liệu so sánh thuật toán tô màu: tỉ lệ thành công, kích thước cây tìm kiếm trung bình.",
+      "invariants": [
+        "Q1. `solvedCount + stuckCount + unsolvableCount + limitCount + invalidCount = puzzleCount`."
+      ],
+      "attributes": [
+        {
+          "name": "puzzleCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số đề đã chạy."
+        },
+        {
+          "name": "solvedCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số đề SOLVED."
+        },
+        {
+          "name": "stuckCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số đề STUCK (chỉ bộ giải tham lam)."
+        },
+        {
+          "name": "unsolvableCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số đề UNSOLVABLE."
+        },
+        {
+          "name": "limitCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số đề LIMIT_REACHED."
+        },
+        {
+          "name": "invalidCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số đề INVALID_PUZZLE."
+        },
+        {
+          "name": "totalStats",
+          "type": "SearchStats",
+          "vis": "+",
+          "summary": "Tổng các bộ đếm trên mọi đề."
+        },
+        {
+          "name": "totalNanos",
+          "type": "Nanos",
+          "vis": "+",
+          "summary": "Tổng thời gian giải (nano giây), không gồm đọc file và kiểm tra."
+        },
+        {
+          "name": "hardestIndex",
+          "type": "int",
+          "vis": "+",
+          "summary": "Thứ tự (từ 0) của đề tốn nhiều nút nhất; −1 nếu chưa có đề.",
+          "example": "Giúp tra lại đề khó nhất để phân tích."
+        },
+        {
+          "name": "hardestNodes",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số nút của đề khó nhất."
+        }
+      ],
+      "methods": [
+        {
+          "name": "puzzlesPerSecond",
+          "vis": "+",
+          "params": [],
+          "returns": "float",
+          "summary": "Số đề giải được trong một giây (theo tổng thời gian giải).",
+          "pre": [
+            "`totalNanos > 0`."
+          ],
+          "post": [
+            "puzzleCount / (totalNanos / 1e9)."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng.",
+          "example": "Đơn vị «đề mỗi giây» cũng là thước đo mà tài liệu của Tdoku dùng để so sánh các solver (walkthrough.md mục 6.1), nên số liệu của đồ án đối chiếu được với tài liệu đó."
+        },
+        {
+          "name": "meanNodes",
+          "vis": "+",
+          "params": [],
+          "returns": "float",
+          "summary": "Số nút trung bình mỗi đề.",
+          "pre": [
+            "`puzzleCount > 0`."
+          ],
+          "post": [
+            "totalStats.nodes / puzzleCount."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        },
+        {
+          "name": "successRate",
+          "vis": "+",
+          "params": [],
+          "returns": "float",
+          "summary": "Tỉ lệ đề SOLVED.",
+          "pre": [
+            "`puzzleCount > 0`."
+          ],
+          "post": [
+            "solvedCount / puzzleCount."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng.",
+          "example": "Với bộ giải tham lam, tỉ lệ này cho biết tham lam không quay lui giải được bao nhiêu phần đề."
+        }
+      ],
+      "impl": {
+        "cpp": "`struct BenchmarkSummary`.",
+        "python": "`@dataclass(slots=True)`."
+      },
+      "notes": [],
+      "read": 27,
+      "stage": 5,
+      "readWhy": "Số liệu tổng hợp của một lần thực nghiệm; dùng SearchStats.",
+      "pos": [
+        464,
+        835
+      ]
+    }
+  ]
+}

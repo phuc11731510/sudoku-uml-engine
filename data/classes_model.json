@@ -1,0 +1,1049 @@
+{
+  "classes": [
+    {
+      "id": "Puzzle",
+      "stereotype": "value",
+      "package": "model",
+      "status": "core",
+      "summary": "Đề bài: 81 ô, ô nào đã có chữ số cho sẵn (đỉnh đã được tô từ trước). Bất biến.",
+      "role": "Giữ đề bài ban đầu và không bao giờ thay đổi. Biết đọc từ chuỗi 81 ký tự và in lại thành chuỗi. Không kiểm tra luật Sudoku: hai chữ số trùng trong cùng hàng vẫn là một `Puzzle` hợp lệ về định dạng; việc phát hiện xung đột do `Board.fromPuzzle` làm.",
+      "graph": "Tập các đỉnh đã được tô sẵn trong bài toán tô màu mở rộng: cho một phép tô màu một phần, hãy mở rộng nó thành phép tô màu hợp lệ toàn bộ đồ thị bằng 9 màu.",
+      "invariants": [
+        "P1. `givens` luôn có đúng 81 phần tử, mỗi phần tử từ 0 đến 9.",
+        "P2. Sau khi tạo, không có hàm nào sửa `givens`."
+      ],
+      "attributes": [
+        {
+          "name": "givens",
+          "type": "Array<Color, 81>",
+          "vis": "-",
+          "readonly": true,
+          "summary": "Màu cho sẵn của từng đỉnh; 0 nghĩa là đỉnh chưa được tô.",
+          "detail": "Chỉ số mảng chính là chỉ số đỉnh (row * 9 + col).",
+          "example": "Với đề mẫu `5300700006001950...`, `givens[0] = 5`, `givens[1] = 3`, `givens[2] = 0`.",
+          "cpp": "`std::array<std::uint8_t, 81>`",
+          "python": "`tuple[int, ...]` (bất biến) độ dài 81"
+        }
+      ],
+      "methods": [
+        {
+          "name": "fromString",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "text: String"
+          ],
+          "returns": "Puzzle",
+          "summary": "Đọc đề từ chuỗi đúng 81 ký tự.",
+          "detail": "Ký tự `1` đến `9` là chữ số cho sẵn; `0` hoặc `.` là ô trống. Mọi ký tự khác, hoặc độ dài khác 81, là lỗi.",
+          "pre": [
+            "Không có (hàm tự kiểm tra đầu vào)."
+          ],
+          "post": [
+            "Trả về `Puzzle` có `givens` đúng với chuỗi.",
+            "Với chuỗi hợp lệ s: `fromString(s).toString()` giống s sau khi đổi mọi `0` thành `.`."
+          ],
+          "errors": "Ném `PuzzleFormatError` với `position` là chỉ số ký tự sai đầu tiên, hoặc −1 nếu độ dài sai.",
+          "complexity": "O(81)",
+          "perf": "Chạy một lần cho mỗi đề, không nằm trong vòng lặp nóng.",
+          "example": "`fromString(«53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79»)` cho đề mẫu có 30 chữ số cho sẵn. `fromString(«5300»)` ném lỗi với position = −1.",
+          "cpp": "Ném ngoại lệ dẫn xuất từ `std::invalid_argument`.",
+          "python": "Ném lớp con của `ValueError`."
+        },
+        {
+          "name": "empty",
+          "static": true,
+          "vis": "+",
+          "params": [],
+          "returns": "Puzzle",
+          "summary": "Đề rỗng: cả 81 ô đều trống.",
+          "detail": "Dùng làm điểm xuất phát cho giao diện khi người dùng tự nhập đề, hoặc để thử bộ giải với nhiều lời giải.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "`givenCount() = 0`."
+          ],
+          "complexity": "O(81)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        },
+        {
+          "name": "toString",
+          "vis": "+",
+          "params": [],
+          "returns": "String",
+          "summary": "Chuỗi 81 ký tự; ô trống in dấu chấm.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Độ dài đúng 81; mỗi ký tự là `.` hoặc `1` đến `9`."
+          ],
+          "complexity": "O(81)",
+          "perf": "Không nằm trong vòng lặp nóng.",
+          "python": "Có thể đặt tên `__str__` để `str(puzzle)` hoạt động."
+        },
+        {
+          "name": "givenAt",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "Color",
+          "summary": "Màu cho sẵn của đỉnh v (0 nếu trống).",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Giá trị trả về từ 0 đến 9."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần đọc mảng; không nằm trong vòng lặp nóng của bộ giải."
+        },
+        {
+          "name": "isGiven",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "bool",
+          "summary": "Đỉnh v có phải đỉnh cho sẵn không.",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Bằng `givenAt(v) != 0`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Giao diện dùng để tô khác màu ô đề bài và ô do bộ giải điền."
+        },
+        {
+          "name": "givenCount",
+          "vis": "+",
+          "params": [],
+          "returns": "int",
+          "summary": "Số ô cho sẵn.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Từ 0 đến 81."
+          ],
+          "complexity": "O(81) hoặc O(1) nếu lưu sẵn",
+          "perf": "Có thể tính một lần khi tạo và lưu lại.",
+          "example": "Đề mẫu có 30 ô cho sẵn nên 51 ô cần tô."
+        },
+        {
+          "name": "withGiven",
+          "vis": "+",
+          "params": [
+            "v: Vertex",
+            "c: Color"
+          ],
+          "returns": "Puzzle",
+          "summary": "Trả về đề mới giống đề này nhưng đỉnh v có màu c (c = 0 để xóa).",
+          "detail": "Không sửa đề cũ. Giao diện dùng để cho người dùng nhập hoặc xóa từng chữ số.",
+          "pre": [
+            "0 ≤ v ≤ 80.",
+            "0 ≤ c ≤ 9."
+          ],
+          "post": [
+            "Đề cũ không đổi.",
+            "`result.givenAt(v) = c`, các ô khác giống đề cũ."
+          ],
+          "complexity": "O(81)",
+          "perf": "Chỉ giao diện gọi, ngoài vòng lặp nóng."
+        }
+      ],
+      "impl": {
+        "cpp": "`struct` hoặc `class` có `std::array<std::uint8_t, 81>`; đặt các hàm tĩnh dưới dạng `static`. Kiểu giá trị nhỏ (81 byte), sao chép rẻ.",
+        "python": "`@dataclass(frozen=True, slots=True)` với trường `givens: tuple[int, ...]` hoặc một lớp thường có `__slots__`."
+      },
+      "notes": [
+        "Không có phương thức kiểm tra xung đột ở đây vì xung đột là tính chất của phép tô màu (xem `Board.fromPuzzle`), và để giữ `Puzzle` chỉ là dữ liệu."
+      ],
+      "read": 1,
+      "stage": 1,
+      "readWhy": "Bắt đầu từ đầu vào: đề bài là gì và được đọc từ chuỗi 81 ký tự như thế nào.",
+      "pos": [
+        898,
+        1495
+      ]
+    },
+    {
+      "id": "PuzzleFormatError",
+      "stereotype": "exception",
+      "package": "model",
+      "status": "core",
+      "summary": "Lỗi khi chuỗi đề không đúng định dạng 81 ký tự.",
+      "role": "Ngoại lệ do `Puzzle.fromString` ném ra. Chỉ dùng cho lỗi đầu vào của người dùng hoặc của tập dữ liệu, không dùng cho lỗi lập trình.",
+      "graph": "Không có.",
+      "invariants": [
+        "E1. `position` là −1 hoặc nằm trong 0..80."
+      ],
+      "attributes": [
+        {
+          "name": "message",
+          "type": "String",
+          "vis": "+",
+          "readonly": true,
+          "summary": "Mô tả lỗi cho người đọc.",
+          "example": "«Độ dài phải là 81, nhận được 4»."
+        },
+        {
+          "name": "position",
+          "type": "int",
+          "vis": "+",
+          "readonly": true,
+          "summary": "Chỉ số ký tự sai đầu tiên; −1 nếu lỗi nằm ở độ dài.",
+          "example": "Chuỗi có ký tự `x` ở vị trí 80 thì position = 80."
+        }
+      ],
+      "methods": [],
+      "impl": {
+        "cpp": "Lớp dẫn xuất từ `std::invalid_argument`, thêm trường `position`.",
+        "python": "Lớp dẫn xuất từ `ValueError`, thêm thuộc tính `position`."
+      },
+      "notes": [
+        "Giao diện hiển thị `message` cho người dùng và tô sáng ô tại `position`."
+      ],
+      "read": 2,
+      "stage": 1,
+      "readWhy": "Đọc ngay sau Puzzle vì đây là lỗi mà Puzzle.fromString có thể ném ra.",
+      "pos": [
+        481,
+        1620
+      ]
+    },
+    {
+      "id": "SudokuGraph",
+      "stereotype": "immutable",
+      "package": "model",
+      "status": "core",
+      "summary": "Đồ thị Sudoku: 81 đỉnh, 810 cạnh, 27 clique. Tính một lần, chỉ đọc, dùng chung.",
+      "role": "Là nơi duy nhất trong engine biết cấu trúc đồ thị: ô nào kề ô nào, và ba nhóm (hàng, cột, khối) chứa mỗi ô. Mọi lớp khác chỉ hỏi lớp này, không tự tính lại chỉ số hàng, cột, khối. Được dựng một lần lúc khởi động bằng công thức, không đọc từ file.",
+      "graph": "Đồ thị G = (V, E) với |V| = 81, |E| = 810, thuần nhất bậc 20 (mỗi đỉnh có đúng 20 đỉnh kề). Có đúng 27 clique cực đại, mỗi clique 9 đỉnh. Số sắc độ χ(G) = 9 (cận dưới là kích thước clique, và tồn tại phép tô 9 màu).",
+      "invariants": [
+        "G1. Có 81 đỉnh, 27 nhóm, mỗi nhóm đúng 9 đỉnh, mỗi đỉnh nằm trong đúng 3 nhóm (một hàng, một cột, một khối).",
+        "G2. Mỗi đỉnh có đúng 20 đỉnh kề, khác nhau và khác chính nó.",
+        "G3. Kề nhau là quan hệ đối xứng: u kề v khi và chỉ khi v kề u.",
+        "G4. Có đúng 810 cạnh, mỗi cạnh (u, v) có u < v và xuất hiện đúng một lần.",
+        "G5. Bất biến sau khi dựng; đọc từ nhiều luồng cùng lúc là an toàn."
+      ],
+      "attributes": [
+        {
+          "name": "cliqueOf",
+          "type": "Array<Array<CliqueId, 3>, 81>",
+          "vis": "-",
+          "readonly": true,
+          "summary": "Với mỗi đỉnh: mã ba nhóm chứa nó, theo thứ tự (hàng, cột, khối).",
+          "detail": "Đây là bảng mà `Board` đọc trong mỗi lần `assign`, `unassign`, `forbiddenColors`. Nên được `Board` giữ một tham chiếu trực tiếp tới mảng này để tránh gọi hàm.",
+          "example": "`cliqueOf[40] = [4, 13, 22]`: hàng 4, cột 4 (9 + 4), khối 4 (18 + 4). `cliqueOf[2] = [0, 11, 18]`.",
+          "cpp": "`std::array<std::array<std::uint8_t, 3>, 81>` tính trong hàm dựng; có thể là `constexpr`.",
+          "python": "`tuple` các `tuple` độ dài 3."
+        },
+        {
+          "name": "cliqueVertices",
+          "type": "Array<Array<Vertex, 9>, 27>",
+          "vis": "-",
+          "readonly": true,
+          "summary": "Với mỗi nhóm: 9 đỉnh thuộc nhóm, theo thứ tự tăng dần.",
+          "example": "`cliqueVertices[0] = [0, 1, 2, 3, 4, 5, 6, 7, 8]` (hàng 0). `cliqueVertices[18] = [0, 1, 2, 9, 10, 11, 18, 19, 20]` (khối 0)."
+        },
+        {
+          "name": "neighbors",
+          "type": "Array<Array<Vertex, 20>, 81>",
+          "vis": "-",
+          "readonly": true,
+          "summary": "Với mỗi đỉnh: 20 đỉnh kề, sắp tăng dần.",
+          "detail": "Là hợp ba nhóm của đỉnh bỏ chính nó. Hot path của bộ giải KHÔNG dùng bảng này (Board dùng 3 mặt nạ nhóm); chỉ dùng cho đếm đỉnh kề chưa tô, kiểm tra lời giải và giao diện.",
+          "example": "`neighbors[0] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 18, 19, 20, 27, 36, 45, 54, 63, 72]`."
+        },
+        {
+          "name": "edges",
+          "type": "Array<Edge, 810>",
+          "vis": "-",
+          "readonly": true,
+          "summary": "810 cạnh (u, v) với u < v.",
+          "detail": "Dùng bởi `SolutionVerifier` (kiểm tra «không cạnh nào có hai đầu cùng màu») và bởi giao diện khi vẽ đồ thị.",
+          "example": "Cạnh đầu tiên là (0, 1); cạnh cuối cùng là (79, 80)."
+        },
+        {
+          "name": "VERTEX_COUNT",
+          "type": "int = 81",
+          "vis": "+",
+          "static": true,
+          "readonly": true,
+          "summary": "Số đỉnh.",
+          "example": "81."
+        },
+        {
+          "name": "EDGE_COUNT",
+          "type": "int = 810",
+          "vis": "+",
+          "static": true,
+          "readonly": true,
+          "summary": "Số cạnh.",
+          "example": "81 × 20 / 2 = 810."
+        }
+      ],
+      "methods": [
+        {
+          "name": "instance",
+          "static": true,
+          "vis": "+",
+          "params": [],
+          "returns": "SudokuGraph",
+          "summary": "Trả về đồ thị dùng chung: cả chương trình chỉ có một đối tượng `SudokuGraph`.",
+          "detail": [
+            "Đồ thị Sudoku giống nhau cho mọi đề và không bị sửa sau khi xây (các thuộc tính đều chỉ đọc), nên chỉ cần một bản. Phương thức này là cách duy nhất để lấy bản đó.",
+            "Ví dụ: `Board` của đề A và `Board` của đề B cùng gọi `instance()` và nhận cùng một đối tượng, nên việc lập bảng 810 cạnh chỉ làm một lần."
+          ],
+          "implNote": "Hai dòng dưới đây là cách để cả chương trình chỉ có một đối tượng `SudokuGraph`. Chúng không phải cách viết thân phương thức `instance()`.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Mọi lần gọi trả về cùng một đối tượng."
+          ],
+          "complexity": "O(81 × 20) một lần duy nhất khi đối tượng được xây; O(1) mỗi lần lấy",
+          "perf": "Ngoài vòng lặp nóng: `Board` lưu tham chiếu khi được tạo.",
+          "cpp": "Biến tĩnh trong hàm, khởi tạo ở lần gọi đầu.",
+          "python": "Biến cấp module `GRAPH = SudokuGraph()`, chạy một lần khi import; không cần hàm này."
+        },
+        {
+          "name": "rowOf",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "int",
+          "summary": "Hàng của đỉnh v (0 đến 8).",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Bằng v / 9."
+          ],
+          "complexity": "O(1)",
+          "perf": "Phép chia cho hằng số: trình biên dịch thay bằng phép nhân; rẻ. Ngoài vòng lặp nóng (bảng `cliqueOf` đã tính sẵn).",
+          "example": "`rowOf(40) = 4`."
+        },
+        {
+          "name": "colOf",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "int",
+          "summary": "Cột của đỉnh v (0 đến 8).",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Bằng v % 9."
+          ],
+          "complexity": "O(1)",
+          "perf": "Rẻ.",
+          "example": "`colOf(2) = 2`."
+        },
+        {
+          "name": "boxOf",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "int",
+          "summary": "Khối 3×3 của đỉnh v (0 đến 8).",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Bằng (row / 3) * 3 + col / 3."
+          ],
+          "complexity": "O(1)",
+          "perf": "Rẻ.",
+          "example": "`boxOf(40) = 4`, `boxOf(10) = 0`."
+        },
+        {
+          "name": "cliquesOf",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "Array<CliqueId, 3>",
+          "summary": "Ba nhóm chứa đỉnh v: (hàng, cột, khối).",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Các mã tăng dần: hàng < cột < khối."
+          ],
+          "complexity": "O(1)",
+          "perf": "Giao diện dùng để tô sáng ba nhóm khi trỏ chuột vào một ô.",
+          "example": "`cliquesOf(40) = [4, 13, 22]`."
+        },
+        {
+          "name": "neighborsOf",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "Array<Vertex, 20>",
+          "summary": "20 đỉnh kề của v, tăng dần.",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Đúng 20 phần tử, không chứa v."
+          ],
+          "complexity": "O(1) trả về tham chiếu",
+          "perf": "Trả về tham chiếu hoặc view, không sao chép (C++: `const std::array<...>&`).",
+          "example": "`neighborsOf(0)` có 20 phần tử: 8 cùng hàng (1 đến 8), 8 cùng cột (9, 18, 27, 36, 45, 54, 63, 72) và 4 cùng khối nhưng khác hàng khác cột (10, 11, 19, 20). Tổng 8 + 8 + 4 = 20."
+        },
+        {
+          "name": "areAdjacent",
+          "vis": "+",
+          "params": [
+            "u: Vertex",
+            "v: Vertex"
+          ],
+          "returns": "bool",
+          "summary": "Hai đỉnh có kề nhau không (cùng hàng, cùng cột hoặc cùng khối, và khác nhau).",
+          "pre": [
+            "0 ≤ u, v ≤ 80."
+          ],
+          "post": [
+            "Đối xứng; `areAdjacent(v, v) = false`."
+          ],
+          "complexity": "O(1): so sánh 3 cặp mã nhóm",
+          "perf": "Không dùng trong vòng lặp nóng.",
+          "example": "`areAdjacent(0, 10) = true` (cùng khối 0). `areAdjacent(0, 29) = false` (29 ở hàng 3, cột 2, khối 3)."
+        },
+        {
+          "name": "degreeOf",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "int",
+          "summary": "Bậc của đỉnh v; luôn bằng 20.",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Giá trị trả về = 20."
+          ],
+          "complexity": "O(1)",
+          "perf": "Có để dùng từ vựng đồ thị trong báo cáo và giao diện; giá trị là hằng."
+        }
+      ],
+      "impl": {
+        "cpp": "Lớp bất biến; hàm dựng tính các bảng từ công thức hàng, cột, khối. Có thể tính lúc biên dịch (`constexpr`), nhưng cách tính lúc chạy cũng đủ nhanh vì chỉ làm một lần.",
+        "python": "Lớp có `__slots__`; các bảng là `tuple` các `tuple`. Đối tượng dùng chung là biến cấp module `GRAPH` (xem phương thức `instance()`)."
+      },
+      "notes": [
+        "Mặt nạ bit của tập đỉnh kề (81 bit) không cần trong thiết kế cách 3, nên không có trong lớp này.",
+        "Các số 81, 810, 20, 27, 9 đã được đo ở walkthrough-bat-dau-ke-hoach.md mục 2."
+      ],
+      "read": 3,
+      "stage": 1,
+      "readWhy": "Cấu trúc đồ thị (81 đỉnh, 810 cạnh, 27 clique) là nền của mọi lớp sau.",
+      "pos": [
+        2179,
+        1787
+      ]
+    },
+    {
+      "id": "ColorSet",
+      "stereotype": "value",
+      "package": "model",
+      "status": "core",
+      "summary": "Lớp chứa các phép toán trên tập màu (coi tập màu là một số nguyên 9 bit).",
+      "role": "Tập màu là một tập con của các màu 1 đến 9, ví dụ {1, 2, 4}. Để lưu và tính nhanh, tập màu được viết thành một số nguyên có 9 bit: bit thứ c − 1 bật (bằng 1) khi màu c thuộc tập. Ví dụ {1, 2, 4} có bit 0, 1, 3 bật, tức 0b1011 = 11. Lớp này gom tên và định nghĩa các phép toán trên số nguyên đó để mọi lớp khác dùng chung một quy ước. Nó không tạo đối tượng mới: tập màu chính là số nguyên, nên không tốn thêm bộ nhớ hay lời gọi hàm.",
+      "graph": "Một tập màu là một tập con của 9 màu. Với mỗi đỉnh (ô), hợp của ba tập màu đã dùng ở ba clique của nó (hàng, cột, khối) chính là các màu bị cấm tại đỉnh đó. `size(S)` cho biết tập có bao nhiêu màu.",
+      "invariants": [
+        "C1. Mọi tập màu là số nguyên từ 0 đến 511: chỉ 9 bit thấp được bật (511 = 0b111111111)."
+      ],
+      "attributes": [
+        {
+          "name": "EMPTY_SET",
+          "type": "ColorSet = 0",
+          "vis": "+",
+          "static": true,
+          "readonly": true,
+          "summary": "Tập rỗng (không có màu nào).",
+          "example": "0."
+        },
+        {
+          "name": "FULL_SET",
+          "type": "ColorSet = 511",
+          "vis": "+",
+          "static": true,
+          "readonly": true,
+          "summary": "Tập đủ cả chín màu.",
+          "example": "511 = 0b111111111 (9 bit đều bật)."
+        }
+      ],
+      "methods": [
+        {
+          "name": "bitOf",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "c: Color"
+          ],
+          "returns": "ColorSet",
+          "summary": "Tập chỉ có đúng một màu c.",
+          "pre": [
+            "1 ≤ c ≤ 9."
+          ],
+          "post": [
+            "Bit c − 1 bật, các bit khác tắt; bằng 1 << (c − 1)."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một phép dịch bit; nội tuyến.",
+          "example": "`bitOf(5) = 16` (màu 5 là bit 4, và 2⁴ = 16)."
+        },
+        {
+          "name": "contains",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "s: ColorSet",
+            "c: Color"
+          ],
+          "returns": "bool",
+          "summary": "Kiểm tra màu c có nằm trong tập s không.",
+          "pre": [
+            "1 ≤ c ≤ 9."
+          ],
+          "post": [
+            "Trả về true khi bit c − 1 của s đang bật; tính bằng ((s >> (c − 1)) & 1) != 0."
+          ],
+          "complexity": "O(1)",
+          "perf": "Nội tuyến.",
+          "example": "`contains(11, 4) = true` (11 = {1, 2, 4}); `contains(11, 3) = false`."
+        },
+        {
+          "name": "add",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "s: ColorSet",
+            "c: Color"
+          ],
+          "returns": "ColorSet",
+          "summary": "Thêm màu c vào tập s (trả về tập mới).",
+          "pre": [
+            "1 ≤ c ≤ 9."
+          ],
+          "post": [
+            "Bật bit c − 1; bằng s | bitOf(c). Nếu c đã có trong s thì kết quả bằng s."
+          ],
+          "complexity": "O(1)",
+          "perf": "Nội tuyến.",
+          "example": "`add(84, 1) = 85` (84 = {3, 5, 7}; thêm màu 1 được {1, 3, 5, 7})."
+        },
+        {
+          "name": "remove",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "s: ColorSet",
+            "c: Color"
+          ],
+          "returns": "ColorSet",
+          "summary": "Bỏ màu c khỏi tập s (trả về tập mới).",
+          "pre": [
+            "1 ≤ c ≤ 9."
+          ],
+          "post": [
+            "Tắt bit c − 1; bằng s & ~bitOf(c) (giữ trong 9 bit). Nếu c không có trong s thì kết quả bằng s."
+          ],
+          "complexity": "O(1)",
+          "perf": "Nội tuyến.",
+          "example": "`remove(85, 1) = 84` (85 = {1, 3, 5, 7}; bỏ màu 1 được {3, 5, 7})."
+        },
+        {
+          "name": "size",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "s: ColorSet"
+          ],
+          "returns": "int",
+          "summary": "Đếm số màu trong tập (chính là số bit đang bật).",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Từ 0 đến 9."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lệnh popcount của CPU khi biên dịch với `-march=native`; không có cờ này trình biên dịch dùng chuỗi phép toán bit chậm hơn (chưa đo mức chênh). Đây là phép chạy nhiều nhất trong DSATUR (tính độ bão hòa của mỗi đỉnh chưa tô ở mỗi nút).",
+          "example": "`size(500) = 6` (500 = {3, 5, 6, 7, 8, 9}).",
+          "cpp": "`std::popcount(s)` (C++20, `<bit>`).",
+          "python": "`s.bit_count()` (Python từ 3.10; máy phát triển hiện dùng 3.13)."
+        },
+        {
+          "name": "complement",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "s: ColorSet"
+          ],
+          "returns": "ColorSet",
+          "summary": "Các màu còn lại: những màu từ 1 đến 9 mà s không có.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Bằng FULL_SET & ~s; size(s) + size(complement(s)) = 9."
+          ],
+          "complexity": "O(1)",
+          "perf": "Nội tuyến.",
+          "example": "`complement(500) = 11`, tức {1, 2, 4}."
+        },
+        {
+          "name": "isSingle",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "s: ColorSet"
+          ],
+          "returns": "bool",
+          "summary": "Kiểm tra tập có đúng một màu không.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Trả về true khi s khác 0 và chỉ có một bit bật; tính bằng s != 0 và (s & (s − 1)) == 0."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không cần đếm bit; dùng để đếm nước đi bắt buộc.",
+          "example": "`isSingle(16) = true` (16 = {5}); `isSingle(11) = false` (ba màu); `isSingle(0) = false` (tập rỗng)."
+        },
+        {
+          "name": "lowest",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "s: ColorSet"
+          ],
+          "returns": "Color",
+          "summary": "Màu nhỏ nhất trong tập.",
+          "pre": [
+            "Tập s không rỗng (s != EMPTY_SET)."
+          ],
+          "post": [
+            "Màu trả về thuộc s, và không màu nào của s nhỏ hơn nó."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lệnh đếm số 0 cuối của CPU. Bộ giải thử các màu theo thứ tự tăng dần bằng hàm này.",
+          "example": "`lowest(11) = 1`; `lowest(8) = 4` (8 = {4}).",
+          "cpp": "`std::countr_zero(s) + 1`.",
+          "python": "`(s & -s).bit_length()`."
+        },
+        {
+          "name": "toList",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "s: ColorSet"
+          ],
+          "returns": "List<Color>",
+          "summary": "Liệt kê các màu của tập theo thứ tự tăng dần (dùng cho giao diện và gỡ lỗi).",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Độ dài bằng `size(s)`."
+          ],
+          "complexity": "O(9)",
+          "perf": "Cấp phát danh sách nên KHÔNG dùng trong vòng lặp nóng.",
+          "example": "`toList(11) = [1, 2, 4]`."
+        }
+      ],
+      "impl": {
+        "cpp": "Không tạo lớp. Khai báo `using ColorSet = std::uint16_t;` (số nguyên không dấu 16 bit, chỉ dùng 9 bit thấp) và đặt các hàm `inline constexpr` trong một header, ví dụ trong không gian tên `color_set`.",
+        "python": "Không tạo lớp. Tập màu là `int` thường. Trong vòng lặp nóng, viết thẳng biểu thức bit (gọi hàm Python chậm hơn nhiều); các hàm có tên dùng cho phần không nóng và cho tài liệu."
+      },
+      "notes": [
+        "Hợp của hai tập là `a | b`, giao của hai tập là `a & b`. Hai phép này viết thẳng bằng toán tử, không có hàm riêng.",
+        "Quyết định: không bọc số nguyên vào một lớp. Trong C++, lớp bọc nội tuyến không tốn thêm. Trong Python, mỗi lần tạo đối tượng là một khoản chi phí lớn."
+      ],
+      "read": 4,
+      "stage": 1,
+      "readWhy": "Quy ước tập màu 9 bit; Board và SearchFrame đều dùng nó.",
+      "pos": [
+        3037,
+        1043
+      ]
+    },
+    {
+      "id": "Board",
+      "stereotype": "class",
+      "package": "model",
+      "status": "core",
+      "summary": "Phép tô màu một phần đang xây dựng: màu của từng đỉnh và 27 mặt nạ «màu đã dùng ở mỗi nhóm».",
+      "role": "Giữ trạng thái đang thay đổi của bài toán và đảm bảo bất biến «không có hai đỉnh kề nhau cùng màu». Đặt hoặc bỏ một màu chỉ ghi đúng 3 số (3 nhóm của đỉnh). Mọi truy vấn của thuật toán (màu bị cấm, màu còn dùng được, độ bão hòa) đều tính từ 3 số đó. Đây là lớp nóng nhất của engine.",
+      "graph": "Phép tô màu một phần của đồ thị. `usedColors[k]` là tập màu đã dùng trong clique k. Độ bão hòa của đỉnh chưa tô v là số màu khác nhau trên các đỉnh kề, bằng `size(usedColors[hàng] | usedColors[cột] | usedColors[khối])`; vì ba nhóm của v phủ đúng 20 đỉnh kề của nó nên hợp ba tập chính là tập màu của các đỉnh kề.",
+      "invariants": [
+        "I1. Nếu `colors[v] = c ≠ 0` thì bit (c − 1) bật trong cả ba mặt nạ của ba nhóm chứa v.",
+        "I2. `usedColors[k]` bằng đúng hợp các bit màu của các đỉnh đã tô thuộc nhóm k, và trong một nhóm không có hai đỉnh cùng màu (nên `size(usedColors[k])` = số đỉnh đã tô trong nhóm k).",
+        "I3. `uncoloredCount` bằng số đỉnh v có `colors[v] = 0`.",
+        "I4. Hệ quả của I1 và I2: không có hai đỉnh kề nhau cùng màu (phép tô luôn hợp lệ một phần)."
+      ],
+      "attributes": [
+        {
+          "name": "graph",
+          "type": "SudokuGraph",
+          "vis": "-",
+          "readonly": true,
+          "summary": "Tham chiếu tới đồ thị dùng chung (chỉ đọc).",
+          "detail": "Board không sở hữu đồ thị. C++: giữ tham chiếu hoặc con trỏ; hot path nên đọc bảng `cliqueOf` qua tham chiếu đã lấy sẵn."
+        },
+        {
+          "name": "colors",
+          "type": "Array<Color, 81>",
+          "vis": "-",
+          "summary": "Màu hiện tại của từng đỉnh; 0 là chưa tô.",
+          "example": "Đề mẫu lúc đầu: `colors[0] = 5`, `colors[2] = 0`; sau `assign(2, 1)` thì `colors[2] = 1`.",
+          "cpp": "`std::array<std::uint8_t, 81>`",
+          "python": "`bytearray(81)` hoặc `list` độ dài 81"
+        },
+        {
+          "name": "usedColors",
+          "type": "Array<ColorSet, 27>",
+          "vis": "-",
+          "summary": "Cách 3: với mỗi nhóm (9 hàng, 9 cột, 9 khối), tập màu đã dùng trong nhóm đó.",
+          "detail": "27 số nguyên 9 bit. Thay cho 81 mặt nạ ứng viên theo từng ô (cách 1). Đọc ứng viên của một ô: lấy 3 số rồi OR. Đặt hoặc bỏ màu: ghi 3 số.",
+          "example": "Đề mẫu lúc đầu: `usedColors[0] = 84` (hàng 0 đã dùng {3, 5, 7}), `usedColors[11] = 128` (cột 2 đã dùng {8}), `usedColors[18] = 436` (khối 0 đã dùng {3, 5, 6, 8, 9}).",
+          "cpp": "`std::array<std::uint16_t, 27>` = 54 byte, nằm gọn trong một dòng cache.",
+          "python": "`list` độ dài 27"
+        },
+        {
+          "name": "uncoloredCount",
+          "type": "int",
+          "vis": "-",
+          "summary": "Số đỉnh chưa tô; cập nhật theo từng `assign`/`unassign`.",
+          "detail": "Giúp `isComplete()` chạy trong O(1) thay vì quét 81 ô.",
+          "example": "Đề mẫu lúc đầu: 51. Sau `assign(2, 1)`: 50."
+        }
+      ],
+      "methods": [
+        {
+          "name": "fromPuzzle",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "puzzle: Puzzle"
+          ],
+          "returns": "Optional<Board>",
+          "summary": "Dựng bảng từ đề; trả về rỗng nếu các ô cho sẵn đã xung đột.",
+          "detail": "Lần lượt đặt từng ô cho sẵn. Nếu một ô cho sẵn có màu đã bị cấm (hai chữ số trùng trong cùng hàng, cột hoặc khối) thì dừng và trả về rỗng.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Nếu thành công: mọi ô cho sẵn đã được tô, bất biến I1..I4 đúng.",
+            "Nếu không: trả về rỗng (bộ giải báo `INVALID_PUZZLE`)."
+          ],
+          "complexity": "O(81)",
+          "perf": "Một lần cho mỗi đề; không nằm trong vòng lặp nóng.",
+          "example": "Đề mẫu cho Board hợp lệ. Đổi ký tự thứ hai thành `5` (hàng 0 có hai chữ số 5) thì trả về rỗng."
+        },
+        {
+          "name": "empty",
+          "static": true,
+          "vis": "+",
+          "params": [],
+          "returns": "Board",
+          "summary": "Bảng chưa tô ô nào.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "`uncoloredCount = 81`; mọi mặt nạ bằng 0."
+          ],
+          "complexity": "O(81)",
+          "perf": "Một lần."
+        },
+        {
+          "name": "copy",
+          "vis": "+",
+          "params": [],
+          "returns": "Board",
+          "summary": "Bản sao độc lập của bảng.",
+          "detail": "Dùng cho giao diện (ảnh chụp để hoàn tác) và bộ kiểm tra. Bộ giải quay lui KHÔNG sao chép bảng; nó hoàn tác bằng `unassign`.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Sửa bản sao không ảnh hưởng bản gốc."
+          ],
+          "complexity": "O(81 + 27)",
+          "perf": "Khoảng 81 + 54 byte; chỉ dùng ngoài vòng lặp nóng."
+        },
+        {
+          "name": "colorOf",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "Color",
+          "summary": "Màu hiện tại của đỉnh v.",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Từ 0 đến 9."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần đọc mảng."
+        },
+        {
+          "name": "isColored",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "bool",
+          "summary": "Đỉnh v đã được tô chưa.",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Bằng `colorOf(v) != 0`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần đọc mảng."
+        },
+        {
+          "name": "colorArray",
+          "vis": "+",
+          "params": [],
+          "returns": "Array<Color, 81>",
+          "summary": "Bản sao mảng màu của cả 81 đỉnh.",
+          "detail": "Dùng để lấy lời giải (`SolveResult.firstSolution`) và đưa cho giao diện hoặc bộ kiểm tra.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Sửa mảng trả về không ảnh hưởng Board."
+          ],
+          "complexity": "O(81)",
+          "perf": "Gọi khi tìm thấy lời giải, không phải ở mỗi nút."
+        },
+        {
+          "name": "usedColorsOf",
+          "vis": "+",
+          "params": [
+            "k: CliqueId"
+          ],
+          "returns": "ColorSet",
+          "summary": "Tập màu đã dùng trong nhóm k.",
+          "pre": [
+            "0 ≤ k ≤ 26."
+          ],
+          "post": [
+            "Bằng `usedColors[k]`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Giao diện dùng để hiển thị «hàng này còn thiếu những chữ số nào».",
+          "example": "Đề mẫu: `usedColorsOf(0) = 84`, tức {3, 5, 7}."
+        },
+        {
+          "name": "forbiddenColors",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "ColorSet",
+          "summary": "Tập màu bị cấm ở v: hợp màu đã dùng của ba nhóm chứa v.",
+          "detail": "Với đỉnh CHƯA tô, đây đúng là tập màu của 20 đỉnh kề. Với đỉnh đã tô, tập này còn chứa cả màu của chính v.",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Bằng `usedColors[hàng] | usedColors[cột] | usedColors[khối]`."
+          ],
+          "complexity": "O(1): 3 lần đọc và 2 phép OR",
+          "perf": "Đường nóng. Nên được nội tuyến vào `availableColors`/`saturation`; không cấp phát.",
+          "example": "Đề mẫu, ô 2: 84 | 128 | 436 = 500, tức {3, 5, 6, 7, 8, 9}."
+        },
+        {
+          "name": "availableColors",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "ColorSet",
+          "summary": "Tập màu còn dùng được ở đỉnh v (ứng viên).",
+          "detail": "Hiểu là «ứng viên» của ô trong Sudoku. Tính từ `forbiddenColors` rồi lấy phần bù trong 9 bit.",
+          "pre": [
+            "v chưa được tô."
+          ],
+          "post": [
+            "Bằng `complement(forbiddenColors(v))`.",
+            "Mỗi màu c trong kết quả thỏa `canAssign(v, c)`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Đường nóng; một lần gọi cho mỗi nút của cây tìm kiếm (ngoài các lần bộ chọn đỉnh quét).",
+          "example": "Đề mẫu, ô 2: 511 − 500 = 11, tức {1, 2, 4}."
+        },
+        {
+          "name": "saturation",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "int",
+          "summary": "Độ bão hòa của v: số màu khác nhau đang có ở các đỉnh kề.",
+          "detail": "Chính là đại lượng DSATUR lấy lớn nhất. Quan hệ: `saturation(v) = 9 − size(availableColors(v))`.",
+          "pre": [
+            "v chưa được tô."
+          ],
+          "post": [
+            "Từ 0 đến 9.",
+            "Bằng `9 − size(availableColors(v))`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Đường nóng của `MaxSaturationSelector`: lặp 81 lần ở mỗi nút (chỉ với đỉnh chưa tô).",
+          "example": "Đề mẫu, ô 2: size(500) = 6 nên độ bão hòa là 6, và ứng viên còn 3 màu."
+        },
+        {
+          "name": "uncoloredNeighborCount",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "int",
+          "summary": "Số đỉnh kề của v chưa được tô (0 đến 20).",
+          "detail": "Cần cho luật hòa gốc của DSATUR (`MOST_UNCOLORED_NEIGHBORS`). Đếm bằng cách duyệt 20 đỉnh kề.",
+          "pre": [
+            "0 ≤ v ≤ 80."
+          ],
+          "post": [
+            "Từ 0 đến 20."
+          ],
+          "complexity": "O(20)",
+          "perf": "Đắt hơn các truy vấn khác. Bộ chọn chỉ gọi khi có hòa độ bão hòa. Chưa đo trong C++; bản mẫu Python cho thấy luật hòa này giảm số nút khoảng 9% nhưng làm chậm rõ rệt mỗi nút.",
+          "example": "Đề mẫu, ô 59 có độ bão hòa 8 và 11 đỉnh kề chưa tô."
+        },
+        {
+          "name": "canAssign",
+          "vis": "+",
+          "params": [
+            "v: Vertex",
+            "c: Color"
+          ],
+          "returns": "bool",
+          "summary": "Có đặt được màu c vào đỉnh v không.",
+          "pre": [
+            "0 ≤ v ≤ 80.",
+            "1 ≤ c ≤ 9."
+          ],
+          "post": [
+            "Đúng khi v chưa tô và c không bị cấm ở v."
+          ],
+          "complexity": "O(1)",
+          "perf": "Dùng khi nạp đề và trong giao diện (kiểm tra người dùng nhập có hợp lệ); bộ giải không cần vì nó chỉ thử màu lấy từ `availableColors`."
+        },
+        {
+          "name": "assign",
+          "vis": "+",
+          "params": [
+            "v: Vertex",
+            "c: Color"
+          ],
+          "returns": "void",
+          "summary": "Tô đỉnh v màu c: ghi màu và bật bit c − 1 trong 3 mặt nạ nhóm.",
+          "pre": [
+            "v chưa được tô.",
+            "1 ≤ c ≤ 9 và c thuộc `availableColors(v)` (không kiểm tra khi chạy thật)."
+          ],
+          "post": [
+            "`colorOf(v) = c`.",
+            "Bit c − 1 bật trong ba mặt nạ của v.",
+            "`uncoloredCount` giảm 1.",
+            "Bất biến I1..I4 giữ nguyên."
+          ],
+          "complexity": "O(1): 1 ghi màu, 3 ghi mặt nạ, 1 trừ bộ đếm",
+          "perf": "Đường nóng nhất cùng với `unassign`. Không cấp phát, không rẽ nhánh. So với cách 1 (cập nhật tới 20 mặt nạ ô kề) chỉ ghi 3 số.",
+          "example": "Đề mẫu: `assign(2, 1)` đổi `usedColors[0]` từ 84 thành 85, `usedColors[11]` từ 128 thành 129, `usedColors[18]` từ 436 thành 437, và `uncoloredCount` từ 51 thành 50."
+        },
+        {
+          "name": "unassign",
+          "vis": "+",
+          "params": [
+            "v: Vertex"
+          ],
+          "returns": "Color",
+          "summary": "Bỏ màu của đỉnh v, trả về màu vừa bỏ.",
+          "detail": "Hoàn tác chính xác một lần `assign`: xóa bit trong 3 mặt nạ. Xóa là đúng vì trong mỗi nhóm không có hai đỉnh cùng màu (I2).",
+          "pre": [
+            "v đang được tô."
+          ],
+          "post": [
+            "`colorOf(v) = 0`.",
+            "Bit màu cũ tắt trong ba mặt nạ của v.",
+            "`uncoloredCount` tăng 1.",
+            "Bất biến giữ nguyên.",
+            "Giá trị trả về là màu trước khi bỏ."
+          ],
+          "complexity": "O(1)",
+          "perf": "Đường nóng. Thay cho việc sao chép bảng khi quay lui: hoàn tác tốn 3 lần ghi.",
+          "example": "Đề mẫu sau `assign(2, 1)`: `unassign(2)` trả về 1 và đưa ba mặt nạ về 84, 128, 436."
+        },
+        {
+          "name": "isComplete",
+          "vis": "+",
+          "params": [],
+          "returns": "bool",
+          "summary": "Mọi đỉnh đã được tô chưa.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Bằng `uncoloredCount == 0`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một phép so sánh; được gọi ở mỗi nút."
+        },
+        {
+          "name": "checkInvariants",
+          "vis": "+",
+          "params": [],
+          "returns": "bool",
+          "summary": "Tính lại I1..I3 từ `colors` và so với các mặt nạ; dùng để kiểm thử.",
+          "detail": "Không dùng trong chạy thật. Bộ kiểm tra đơn vị gọi sau chuỗi thao tác ngẫu nhiên để chắc `assign`/`unassign` đúng.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Đúng khi mọi bất biến thỏa."
+          ],
+          "complexity": "O(81 × 3)",
+          "perf": "Chỉ gọi trong kiểm thử."
+        }
+      ],
+      "impl": {
+        "cpp": "Các mảng cố định (`std::array`) nằm ngay trong đối tượng; không `new`. Các phương thức đường nóng định nghĩa trong header để trình biên dịch nội tuyến. Cờ đề xuất `-O3 -march=native -flto` (walkthrough.md, Điều 11).",
+        "python": "Dùng `list`/`bytearray`. Mỗi phương thức Python tốn lời gọi hàm, nên trong bộ giải đường nóng hãy chép các tham chiếu `colors`, `used`, `clique_of` vào biến cục bộ và viết biểu thức bit trực tiếp thay vì gọi `forbiddenColors`."
+      },
+      "notes": [
+        "Quyết định cách 3 (đã chọn ngày 2026-10-16). Cách 1 (81 mặt nạ ứng viên theo ô) vẫn được giữ làm phương án thử sau, chẳng hạn khi thêm luật suy luận sâu hơn «không trùng với ô kề», vì những luật đó loại ứng viên mà tập chữ số đã dùng không biểu diễn được.",
+        "Thời gian của hai cách chưa được đo trong C++; sẽ đo khi có bộ giải đầu tiên."
+      ],
+      "read": 5,
+      "stage": 1,
+      "readWhy": "Đọc sau Puzzle, SudokuGraph và ColorSet vì Board dùng cả ba. Đây là lớp nóng nhất của engine.",
+      "pos": [
+        1758,
+        1348
+      ]
+    }
+  ]
+}

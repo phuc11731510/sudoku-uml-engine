@@ -1,0 +1,500 @@
+{
+  "classes": [
+    {
+      "id": "SolveLimits",
+      "stereotype": "value",
+      "package": "results",
+      "status": "core",
+      "summary": "Giới hạn của một lần giải: số nút tối đa và số lời giải cần tìm.",
+      "role": "Gom các tham số điều khiển để chữ ký của `begin` và `solve` không đổi khi thêm tùy chọn. Chỉ là dữ liệu.",
+      "graph": "Không có.",
+      "invariants": [
+        "L1. `maxNodes ≥ 0` (0 nghĩa là không giới hạn).",
+        "L2. `solutionLimit ≥ 1`."
+      ],
+      "attributes": [
+        {
+          "name": "maxNodes",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số lần `assign` tối đa trước khi dừng với LIMIT_REACHED; 0 là không giới hạn.",
+          "detail": "Chỉ so sánh một lần mỗi nút, rẻ. Dùng để chặn đề quá khó khi chạy thực nghiệm và để giao diện không bị treo.",
+          "example": "`maxNodes = 1 000 000` cho thực nghiệm hàng loạt; 0 khi muốn chạy đến cùng."
+        },
+        {
+          "name": "solutionLimit",
+          "type": "int",
+          "vis": "+",
+          "summary": "Dừng khi đã tìm đủ chừng này lời giải. Mặc định 1.",
+          "detail": "Đặt 2 để kiểm tra tính duy nhất: nếu duyệt hết mà chỉ có 1 lời giải thì lời giải là duy nhất. Bộ giải tham lam bỏ qua tham số này.",
+          "example": "Đề mẫu với `solutionLimit = 2`: 1 lời giải, `exhausted = true`, nên đề có lời giải duy nhất."
+        }
+      ],
+      "methods": [
+        {
+          "name": "defaults",
+          "static": true,
+          "vis": "+",
+          "params": [],
+          "returns": "SolveLimits",
+          "summary": "maxNodes = 0, solutionLimit = 1.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Giá trị mặc định ở trên."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        }
+      ],
+      "impl": {
+        "cpp": "`struct SolveLimits { std::int64_t maxNodes = 0; int solutionLimit = 1; };`",
+        "python": "`@dataclass(frozen=True, slots=True)` với giá trị mặc định."
+      },
+      "notes": [
+        "Không có giới hạn thời gian: kiểm tra đồng hồ ở mỗi nút sẽ làm chậm vòng lặp nóng. Muốn giới hạn thời gian thì dùng `maxNodes`, hoặc giao diện gọi `step` theo từng lô."
+      ],
+      "read": 10,
+      "stage": 3,
+      "readWhy": "Tham số điều khiển một lần giải (số nút tối đa, số lời giải cần tìm).",
+      "pos": [
+        916,
+        824
+      ]
+    },
+    {
+      "id": "SolveResult",
+      "stereotype": "value",
+      "package": "results",
+      "status": "core",
+      "summary": "Kết quả của một lần giải: trạng thái, lời giải, số lời giải, thống kê, thời gian.",
+      "role": "Gói mọi thứ cần để so sánh thuật toán và để báo cáo. Chỉ là dữ liệu.",
+      "graph": "Kết quả của thuật toán tô màu: tìm được phép tô hợp lệ, chứng minh không có, hoặc bị kẹt.",
+      "invariants": [
+        "R1. `status = SOLVED` khi và chỉ khi `solutionCount ≥ 1`.",
+        "R2. `firstSolution` có giá trị khi và chỉ khi `status = SOLVED`.",
+        "R3. `exhausted = true` chỉ có thể xảy ra ở bộ giải quay lui khi duyệt hết cây tìm kiếm.",
+        "R4. `status = UNSOLVABLE` kéo theo `exhausted = true`."
+      ],
+      "attributes": [
+        {
+          "name": "status",
+          "type": "SolveStatus",
+          "vis": "+",
+          "summary": "Kết thúc theo cách nào."
+        },
+        {
+          "name": "firstSolution",
+          "type": "Optional<Array<Color, 81>>",
+          "vis": "+",
+          "summary": "Lời giải đầu tiên: 81 màu, theo chỉ số đỉnh.",
+          "example": "Đề mẫu: bắt đầu bằng 5, 3, 4, 6, 7, 8, 9, 1, 2 (hàng đầu)."
+        },
+        {
+          "name": "solutionCount",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số lời giải đã tìm thấy (tối đa `solutionLimit`)."
+        },
+        {
+          "name": "exhausted",
+          "type": "bool",
+          "vis": "+",
+          "summary": "Đã duyệt hết không gian tìm kiếm.",
+          "detail": "Phân biệt «dừng vì đủ lời giải» với «đã thử hết». Cần để kết luận «duy nhất» hoặc «vô nghiệm»."
+        },
+        {
+          "name": "stats",
+          "type": "SearchStats",
+          "vis": "+",
+          "summary": "Các bộ đếm của lần giải."
+        },
+        {
+          "name": "elapsedNanos",
+          "type": "Nanos",
+          "vis": "+",
+          "summary": "Thời gian chạy tính bằng nano giây; chỉ do `solve` điền, ở chế độ từng bước bằng 0."
+        }
+      ],
+      "methods": [
+        {
+          "name": "isSolved",
+          "vis": "+",
+          "params": [],
+          "returns": "bool",
+          "summary": "Có lời giải không.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Bằng `status == SOLVED`."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        },
+        {
+          "name": "isUnique",
+          "vis": "+",
+          "params": [],
+          "returns": "bool",
+          "summary": "Đề có lời giải duy nhất đã được chứng minh không.",
+          "detail": "Đúng khi `status = SOLVED`, `exhausted = true` và `solutionCount = 1`. Chỉ có ý nghĩa nếu lần chạy dùng `solutionLimit ≥ 2`.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Không đổi trạng thái."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        }
+      ],
+      "impl": {
+        "cpp": "`struct SolveResult` có `std::optional<std::array<std::uint8_t, 81>>`.",
+        "python": "`@dataclass(frozen=True, slots=True)`."
+      },
+      "notes": [],
+      "read": 13,
+      "stage": 3,
+      "readWhy": "Gói trạng thái, lời giải và thống kê; dùng SolveStatus và SearchStats nên đọc sau hai lớp đó.",
+      "pos": [
+        941,
+        58
+      ]
+    },
+    {
+      "id": "SolveStatus",
+      "stereotype": "enum",
+      "package": "results",
+      "status": "core",
+      "summary": "Cách một lần giải kết thúc.",
+      "role": "Kiểu liệt kê trả lời «chuyện gì đã xảy ra».",
+      "graph": "Không có.",
+      "invariants": [],
+      "attributes": [],
+      "methods": [],
+      "values": [
+        {
+          "name": "SOLVED",
+          "meaning": "Đã tìm được ít nhất một phép tô màu hợp lệ toàn bộ đồ thị."
+        },
+        {
+          "name": "UNSOLVABLE",
+          "meaning": "Đã duyệt hết cây tìm kiếm và không có lời giải."
+        },
+        {
+          "name": "STUCK",
+          "meaning": "Chỉ cho bộ giải tham lam: gặp đỉnh hết màu và không quay lui."
+        },
+        {
+          "name": "LIMIT_REACHED",
+          "meaning": "Dừng vì chạm `maxNodes` khi chưa tìm đủ lời giải."
+        },
+        {
+          "name": "INVALID_PUZZLE",
+          "meaning": "Các ô cho sẵn đã có hai chữ số trùng trong một hàng, cột hoặc khối."
+        }
+      ],
+      "impl": {
+        "cpp": "`enum class SolveStatus : std::uint8_t`.",
+        "python": "`enum.Enum`."
+      },
+      "notes": [],
+      "read": 11,
+      "stage": 3,
+      "readWhy": "Các cách một lần giải có thể kết thúc.",
+      "pos": [
+        525,
+        76
+      ]
+    },
+    {
+      "id": "SearchStats",
+      "stereotype": "value",
+      "package": "results",
+      "status": "core",
+      "summary": "Các bộ đếm của một lần giải, dùng để so sánh thuật toán.",
+      "role": "Đếm những thứ mà bài báo cáo cần so sánh giữa quay lui thường, quay lui DSATUR và tham lam. Mọi bộ đếm là phép cộng số nguyên rẻ, nằm trong vòng lặp nóng.",
+      "graph": "Kích thước cây tìm kiếm của thuật toán tô màu: số nút, số điểm rẽ nhánh, số ngõ cụt.",
+      "invariants": [
+        "T1. Với mọi lần chạy có tìm kiếm (status khác INVALID_PUZZLE): choicePoints + forcedMoves + deadEnds = nodes + 1 − solutionCount. (Mỗi nút được theo sau bởi đúng một lần chọn đỉnh, cộng một lần chọn ở gốc, trừ đi lần mà bảng đã đầy.)",
+        "T2. backtracks ≤ nodes.",
+        "T3. maxDepth ≤ số ô trống ban đầu ≤ 81."
+      ],
+      "attributes": [
+        {
+          "name": "nodes",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số lần `assign` do bộ giải thực hiện (đã tính cả những lần bị hoàn tác; không tính ô cho sẵn).",
+          "example": "Đề mẫu: quay lui thường 4 208; quay lui DSATUR 51."
+        },
+        {
+          "name": "backtracks",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số lần `unassign` do bộ giải thực hiện.",
+          "example": "Đề mẫu: quay lui thường 4 157; DSATUR 0."
+        },
+        {
+          "name": "choicePoints",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số lần chọn đỉnh có từ 2 màu trở lên còn dùng được (điểm rẽ nhánh, tức một lần «đoán»).",
+          "example": "Đề mẫu, quay lui thường: 1 084; DSATUR: 0."
+        },
+        {
+          "name": "forcedMoves",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số lần chọn đỉnh chỉ còn đúng 1 màu (nước đi bắt buộc).",
+          "example": "Đề mẫu, DSATUR: 51 (toàn bộ nước đi đều bắt buộc)."
+        },
+        {
+          "name": "deadEnds",
+          "type": "int",
+          "vis": "+",
+          "summary": "Số lần chọn đỉnh không còn màu nào (ngõ cụt).",
+          "example": "Đề mẫu, quay lui thường: 1 246; DSATUR: 0."
+        },
+        {
+          "name": "maxDepth",
+          "type": "int",
+          "vis": "+",
+          "summary": "Độ sâu lớn nhất của ngăn xếp tìm kiếm.",
+          "example": "Đề mẫu: 51 (số ô trống)."
+        }
+      ],
+      "methods": [
+        {
+          "name": "selections",
+          "vis": "+",
+          "params": [],
+          "returns": "int",
+          "summary": "Tổng số lần chọn đỉnh = choicePoints + forcedMoves + deadEnds.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Không đổi trạng thái."
+          ],
+          "complexity": "O(1)",
+          "perf": "Không nằm trong vòng lặp nóng."
+        },
+        {
+          "name": "add",
+          "vis": "+",
+          "params": [
+            "other: SearchStats"
+          ],
+          "returns": "void",
+          "summary": "Cộng dồn thống kê của lần chạy khác (cộng các bộ đếm, lấy lớn nhất của maxDepth).",
+          "detail": "Dùng bởi `BenchmarkRunner` để tổng hợp trên nhiều đề.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Các bộ đếm là tổng; maxDepth là max."
+          ],
+          "complexity": "O(1)",
+          "perf": "Một lần cho mỗi đề."
+        },
+        {
+          "name": "reset",
+          "vis": "+",
+          "params": [],
+          "returns": "void",
+          "summary": "Đặt tất cả về 0.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "Mọi bộ đếm bằng 0."
+          ],
+          "complexity": "O(1)",
+          "perf": "Gọi ở `begin`."
+        }
+      ],
+      "impl": {
+        "cpp": "`struct SearchStats` với các trường `std::int64_t`; các phép tăng nằm trực tiếp trong `advance`.",
+        "python": "Lớp có `__slots__`, hoặc biến cục bộ trong `advance` rồi ghi lại cuối; nhanh hơn thuộc tính đối tượng."
+      },
+      "notes": [
+        "Đẳng thức T1 và T2 đã được kiểm tra bằng mã trên 10 lần chạy của bản mẫu: đề mẫu (quay lui thường, DSATUR, DSATUR với solutionLimit = 2), đề Inkala (hai luật hòa), đề gần rỗng với solutionLimit = 2, đề bị giới hạn 50 nút, đề vô nghiệm và hai bộ giải tham lam. Nên đưa vào bộ kiểm tra đơn vị.",
+        "«Số lần đoán» trong báo cáo nên dùng `choicePoints`; «số nút» dùng `nodes`."
+      ],
+      "read": 12,
+      "stage": 3,
+      "readWhy": "Các bộ đếm dùng để so sánh thuật toán.",
+      "pos": [
+        880,
+        470
+      ]
+    },
+    {
+      "id": "StepEvent",
+      "stereotype": "value",
+      "package": "results",
+      "status": "core",
+      "summary": "Một sự kiện của chế độ từng bước: tô, bỏ, tìm thấy lời giải, kết thúc.",
+      "role": "Là thứ giao diện đồ họa đọc để biết bảng vừa thay đổi thế nào: tô sáng đỉnh vừa đổi, cập nhật màu, phát hiệu ứng. Mỗi `step` trả về đúng một sự kiện.",
+      "graph": "Một bước của thuật toán: mở rộng hoặc rút lại phép tô màu một phần.",
+      "invariants": [
+        "E1. Với ASSIGN và UNASSIGN: `vertex` thuộc 0..80 và `color` thuộc 1..9.",
+        "E2. Với SOLUTION_FOUND và FINISHED: `vertex = NO_VERTEX` và `color = 0`."
+      ],
+      "attributes": [
+        {
+          "name": "kind",
+          "type": "StepKind",
+          "vis": "+",
+          "summary": "Loại sự kiện."
+        },
+        {
+          "name": "vertex",
+          "type": "Vertex",
+          "vis": "+",
+          "summary": "Đỉnh bị thay đổi (hoặc NO_VERTEX).",
+          "example": "Đề mẫu, DSATUR, bước đầu tiên: 40."
+        },
+        {
+          "name": "color",
+          "type": "Color",
+          "vis": "+",
+          "summary": "Màu vừa tô hoặc vừa bỏ (hoặc 0).",
+          "example": "Đề mẫu, DSATUR, bước đầu tiên: 5."
+        }
+      ],
+      "methods": [
+        {
+          "name": "assign",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "v: Vertex",
+            "c: Color"
+          ],
+          "returns": "StepEvent",
+          "summary": "Tạo sự kiện ASSIGN.",
+          "pre": [
+            "1 ≤ c ≤ 9."
+          ],
+          "post": [
+            "kind = ASSIGN."
+          ],
+          "complexity": "O(1)",
+          "perf": "Cấu trúc 3 trường nhỏ, giữ trên ngăn xếp."
+        },
+        {
+          "name": "unassign",
+          "static": true,
+          "vis": "+",
+          "params": [
+            "v: Vertex",
+            "c: Color"
+          ],
+          "returns": "StepEvent",
+          "summary": "Tạo sự kiện UNASSIGN (c là màu vừa bỏ).",
+          "pre": [
+            "1 ≤ c ≤ 9."
+          ],
+          "post": [
+            "kind = UNASSIGN."
+          ],
+          "complexity": "O(1)",
+          "perf": "Như trên."
+        },
+        {
+          "name": "solutionFound",
+          "static": true,
+          "vis": "+",
+          "params": [],
+          "returns": "StepEvent",
+          "summary": "Tạo sự kiện SOLUTION_FOUND.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "kind = SOLUTION_FOUND."
+          ],
+          "complexity": "O(1)",
+          "perf": "Như trên."
+        },
+        {
+          "name": "finished",
+          "static": true,
+          "vis": "+",
+          "params": [],
+          "returns": "StepEvent",
+          "summary": "Tạo sự kiện FINISHED.",
+          "pre": [
+            "Không có."
+          ],
+          "post": [
+            "kind = FINISHED."
+          ],
+          "complexity": "O(1)",
+          "perf": "Như trên."
+        }
+      ],
+      "impl": {
+        "cpp": "`struct StepEvent { StepKind kind; std::int8_t vertex; std::int8_t color; };` (ba byte).",
+        "python": "`NamedTuple` hoặc tuple `(kind, vertex, color)`; tuple nhanh nhất."
+      },
+      "notes": [
+        "Thiết kế một bước = một thay đổi bảng giúp giao diện làm hoạt cảnh đơn giản: mỗi sự kiện đúng một ô đổi.",
+        "Nếu bước kết thúc vì đủ lời giải thì `step` trả về SOLUTION_FOUND và `isFinished()` đúng ngay sau đó; nếu kết thúc vì lý do khác, `step` trả về FINISHED. Gọi `step` sau khi đã kết thúc trả về FINISHED và không làm gì."
+      ],
+      "read": 15,
+      "stage": 3,
+      "readWhy": "Sự kiện mà mỗi lần step() trả về; dùng StepKind.",
+      "pos": [
+        1378,
+        310
+      ]
+    },
+    {
+      "id": "StepKind",
+      "stereotype": "enum",
+      "package": "results",
+      "status": "core",
+      "summary": "Loại của một sự kiện từng bước.",
+      "role": "Kiểu liệt kê.",
+      "graph": "Không có.",
+      "invariants": [],
+      "attributes": [],
+      "methods": [],
+      "values": [
+        {
+          "name": "ASSIGN",
+          "meaning": "Một đỉnh vừa được tô màu."
+        },
+        {
+          "name": "UNASSIGN",
+          "meaning": "Một đỉnh vừa bị bỏ màu do quay lui."
+        },
+        {
+          "name": "SOLUTION_FOUND",
+          "meaning": "Bảng vừa đầy và hợp lệ; không đổi đỉnh nào."
+        },
+        {
+          "name": "FINISHED",
+          "meaning": "Lần giải kết thúc mà không có sự kiện lời giải (hết cây, chạm giới hạn, kẹt, đề không hợp lệ), hoặc `step` được gọi sau khi đã kết thúc."
+        }
+      ],
+      "impl": {
+        "cpp": "`enum class StepKind : std::uint8_t`.",
+        "python": "`enum.IntEnum` hoặc hằng số nguyên."
+      },
+      "notes": [],
+      "read": 14,
+      "stage": 3,
+      "readWhy": "Các loại sự kiện của chế độ từng bước.",
+      "pos": [
+        1361,
+        0
+      ]
+    }
+  ]
+}

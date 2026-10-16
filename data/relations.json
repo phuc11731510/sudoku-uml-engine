@@ -1,0 +1,368 @@
+{
+  "relations": [
+    {
+      "id": "r01",
+      "from": "Board",
+      "to": "SudokuGraph",
+      "kind": "association",
+      "label": "đọc cấu trúc nhóm",
+      "fromMult": "*",
+      "toMult": "1",
+      "explain": "Mọi Board cùng tham chiếu một SudokuGraph chỉ đọc. Board không sở hữu đồ thị và không sửa nó; nó chỉ tra bảng `cliqueOf` để biết ba nhóm của một đỉnh."
+    },
+    {
+      "id": "r02",
+      "from": "Board",
+      "to": "ColorSet",
+      "kind": "dependency",
+      "label": "dùng phép toán bit",
+      "explain": "27 mặt nạ của Board là các giá trị ColorSet; mọi truy vấn của Board là phép toán trên tập màu."
+    },
+    {
+      "id": "r03",
+      "from": "Board",
+      "to": "Puzzle",
+      "kind": "dependency",
+      "label": "fromPuzzle()",
+      "explain": "Board.fromPuzzle đọc các ô cho sẵn của Puzzle và tô chúng lên bảng."
+    },
+    {
+      "id": "r04",
+      "from": "Puzzle",
+      "to": "PuzzleFormatError",
+      "kind": "dependency",
+      "label": "ném khi sai định dạng",
+      "explain": "Puzzle.fromString ném PuzzleFormatError nếu chuỗi không đúng 81 ký tự hợp lệ."
+    },
+    {
+      "id": "r05",
+      "from": "VertexSelector",
+      "to": "Board",
+      "kind": "dependency",
+      "label": "đọc, không sửa",
+      "explain": "Bộ chọn đỉnh chỉ đọc trạng thái Board (độ bão hòa, đỉnh đã tô) để quyết định; nó không bao giờ gọi assign hay unassign."
+    },
+    {
+      "id": "r06",
+      "from": "FirstUncoloredSelector",
+      "to": "VertexSelector",
+      "kind": "realization",
+      "label": "",
+      "explain": "Cài đặt giao diện VertexSelector theo thứ tự cố định."
+    },
+    {
+      "id": "r07",
+      "from": "MaxSaturationSelector",
+      "to": "VertexSelector",
+      "kind": "realization",
+      "label": "",
+      "explain": "Cài đặt giao diện VertexSelector theo độ bão hòa lớn nhất (DSATUR / MRV)."
+    },
+    {
+      "id": "r08",
+      "from": "MaxSaturationSelector",
+      "to": "TieBreak",
+      "kind": "association",
+      "label": "tieBreak",
+      "fromMult": "*",
+      "toMult": "1",
+      "explain": "Mỗi bộ chọn DSATUR được cấu hình một luật hòa khi tạo."
+    },
+    {
+      "id": "r09",
+      "from": "Solver",
+      "to": "VertexSelector",
+      "kind": "aggregation",
+      "label": "selector",
+      "fromMult": "*",
+      "toMult": "1",
+      "explain": "Mỗi bộ giải dùng một bộ chọn đỉnh được tiêm vào lúc tạo. Bộ chọn không có trạng thái nên có thể dùng chung, vì vậy đây là kết hợp lỏng (aggregation) chứ không phải sở hữu."
+    },
+    {
+      "id": "r10",
+      "from": "Solver",
+      "to": "Board",
+      "kind": "composition",
+      "label": "board",
+      "fromMult": "1",
+      "toMult": "0..1",
+      "explain": "Bộ giải sở hữu bảng làm việc của lần giải hiện tại; bảng được tạo ở begin() và mất cùng bộ giải."
+    },
+    {
+      "id": "r11",
+      "from": "BacktrackingSolver",
+      "to": "Solver",
+      "kind": "inheritance",
+      "label": "",
+      "explain": "Bộ giải quay lui là một Solver."
+    },
+    {
+      "id": "r12",
+      "from": "GreedyColoringSolver",
+      "to": "Solver",
+      "kind": "inheritance",
+      "label": "",
+      "explain": "Bộ giải tham lam là một Solver."
+    },
+    {
+      "id": "r13",
+      "from": "BacktrackingSolver",
+      "to": "SearchFrame",
+      "kind": "composition",
+      "label": "frames",
+      "fromMult": "1",
+      "toMult": "81",
+      "explain": "Ngăn xếp tìm kiếm là một mảng cố định 81 SearchFrame nằm ngay trong bộ giải (không cấp phát thêm)."
+    },
+    {
+      "id": "r14",
+      "from": "Solver",
+      "to": "Puzzle",
+      "kind": "dependency",
+      "label": "begin(puzzle)",
+      "explain": "Đề bài được truyền vào begin() hoặc solve(); bộ giải không giữ lại đề."
+    },
+    {
+      "id": "r15",
+      "from": "Solver",
+      "to": "SolveLimits",
+      "kind": "association",
+      "label": "limits",
+      "explain": "Bộ giải giữ giới hạn của lần giải hiện tại (nhận ở `begin()`).",
+      "fromMult": "*",
+      "toMult": "1"
+    },
+    {
+      "id": "r16",
+      "from": "Solver",
+      "to": "SolveResult",
+      "kind": "dependency",
+      "label": "tạo",
+      "explain": "result() và solve() tạo SolveResult."
+    },
+    {
+      "id": "r17",
+      "from": "Solver",
+      "to": "StepEvent",
+      "kind": "association",
+      "label": "lastEvent",
+      "explain": "Bộ giải giữ sự kiện của lần thay đổi bảng gần nhất và `step()` trả nó về (một giá trị nhỏ, 3 byte).",
+      "fromMult": "*",
+      "toMult": "1"
+    },
+    {
+      "id": "r18",
+      "from": "SolveResult",
+      "to": "SearchStats",
+      "kind": "composition",
+      "label": "stats",
+      "fromMult": "1",
+      "toMult": "1",
+      "explain": "SolveResult chứa một bản sao SearchStats của lần giải."
+    },
+    {
+      "id": "r19",
+      "from": "SolveResult",
+      "to": "SolveStatus",
+      "kind": "association",
+      "label": "status",
+      "fromMult": "*",
+      "toMult": "1",
+      "explain": "Trạng thái kết thúc của lần giải."
+    },
+    {
+      "id": "r20",
+      "from": "StepEvent",
+      "to": "StepKind",
+      "kind": "association",
+      "label": "kind",
+      "fromMult": "*",
+      "toMult": "1",
+      "explain": "Loại sự kiện."
+    },
+    {
+      "id": "r21",
+      "from": "SolverFactory",
+      "to": "Solver",
+      "kind": "dependency",
+      "label": "tạo",
+      "explain": "SolverFactory.create trả về một Solver mới."
+    },
+    {
+      "id": "r22",
+      "from": "SolverFactory",
+      "to": "SolverKind",
+      "kind": "dependency",
+      "label": "nhận kind",
+      "explain": "SolverKind là khóa chọn loại bộ giải."
+    },
+    {
+      "id": "r23",
+      "from": "SolverFactory",
+      "to": "VertexSelector",
+      "kind": "dependency",
+      "label": "chọn chiến lược",
+      "explain": "SolverFactory tạo bộ chọn phù hợp (`FirstUncoloredSelector` hoặc `MaxSaturationSelector`) rồi tiêm vào bộ giải."
+    },
+    {
+      "id": "r24",
+      "from": "SolutionVerifier",
+      "to": "SudokuGraph",
+      "kind": "dependency",
+      "label": "dùng edges",
+      "explain": "Kiểm tra «không cạnh nào hai đầu cùng màu» bằng danh sách 810 cạnh của đồ thị."
+    },
+    {
+      "id": "r25",
+      "from": "SolutionVerifier",
+      "to": "Puzzle",
+      "kind": "dependency",
+      "label": "đối chiếu ô cho sẵn",
+      "explain": "Kiểm tra lời giải giữ nguyên các ô cho sẵn của đề."
+    },
+    {
+      "id": "r26",
+      "from": "SolutionVerifier",
+      "to": "VerificationResult",
+      "kind": "dependency",
+      "label": "tạo",
+      "explain": "verify() trả về VerificationResult."
+    },
+    {
+      "id": "r27",
+      "from": "VerificationResult",
+      "to": "VerificationError",
+      "kind": "association",
+      "label": "error",
+      "fromMult": "*",
+      "toMult": "1",
+      "explain": "Lý do thất bại."
+    },
+    {
+      "id": "r28",
+      "from": "PuzzleSetReader",
+      "to": "Puzzle",
+      "kind": "dependency",
+      "label": "tạo từng đề",
+      "explain": "next() gọi Puzzle.fromString cho mỗi dòng đề."
+    },
+    {
+      "id": "r29",
+      "from": "BenchmarkRunner",
+      "to": "Solver",
+      "kind": "dependency",
+      "label": "gọi solve()",
+      "explain": "Chạy bộ giải trên từng đề."
+    },
+    {
+      "id": "r30",
+      "from": "BenchmarkRunner",
+      "to": "PuzzleSetReader",
+      "kind": "dependency",
+      "label": "đọc đề",
+      "explain": "Nguồn đề thông thường là PuzzleSetReader; bất kỳ bộ lặp nào trả về Puzzle cũng dùng được."
+    },
+    {
+      "id": "r31",
+      "from": "BenchmarkRunner",
+      "to": "SolutionVerifier",
+      "kind": "dependency",
+      "label": "kiểm tra lời giải",
+      "explain": "Mỗi lời giải được kiểm tra bên ngoài phần đo thời gian."
+    },
+    {
+      "id": "r32",
+      "from": "BenchmarkRunner",
+      "to": "BenchmarkSummary",
+      "kind": "dependency",
+      "label": "tạo",
+      "explain": "run() trả về BenchmarkSummary."
+    },
+    {
+      "id": "r33",
+      "from": "BenchmarkSummary",
+      "to": "SearchStats",
+      "kind": "composition",
+      "label": "totalStats",
+      "fromMult": "1",
+      "toMult": "1",
+      "explain": "Tổng các SearchStats của mọi đề."
+    },
+    {
+      "id": "r34",
+      "from": "GraphAnalyzer",
+      "to": "SudokuGraph",
+      "kind": "dependency",
+      "label": "phân tích",
+      "explain": "Tính các tính chất từ bảng đỉnh kề và bảng nhóm."
+    },
+    {
+      "id": "r35",
+      "from": "GraphAnalyzer",
+      "to": "GraphProperties",
+      "kind": "dependency",
+      "label": "tạo",
+      "explain": "properties() trả về GraphProperties."
+    },
+    {
+      "id": "r36",
+      "from": "SearchFrame",
+      "to": "ColorSet",
+      "kind": "dependency",
+      "label": "remaining",
+      "explain": "Trường remaining của khung là một tập màu."
+    },
+    {
+      "id": "r37",
+      "from": "Solver",
+      "to": "SearchStats",
+      "kind": "composition",
+      "label": "stats",
+      "fromMult": "1",
+      "toMult": "1",
+      "explain": "Bộ giải sở hữu bộ đếm của lần giải hiện tại; `stats()` trả về tham chiếu tới nó."
+    },
+    {
+      "id": "r38",
+      "from": "BacktrackingSolver",
+      "to": "SearchPhase",
+      "kind": "association",
+      "label": "phase",
+      "fromMult": "*",
+      "toMult": "1",
+      "explain": "Giai đoạn hiện tại của máy trạng thái SELECT, TRY, BACKTRACK."
+    },
+    {
+      "id": "r39",
+      "from": "SolverFactory",
+      "to": "TieBreak",
+      "kind": "dependency",
+      "label": "tham số của create()",
+      "explain": "`SolverFactory.create` nhận luật hòa và chuyển cho `MaxSaturationSelector`."
+    },
+    {
+      "id": "r40",
+      "from": "GraphAnalyzer",
+      "to": "TieBreak",
+      "kind": "dependency",
+      "label": "tham số của dsaturColorCount()",
+      "explain": "Cho phép đo số màu của DSATUR với cả hai luật hòa."
+    },
+    {
+      "id": "r41",
+      "from": "BenchmarkRunner",
+      "to": "Puzzle",
+      "kind": "dependency",
+      "label": "Iterator<Puzzle>",
+      "explain": "Nguồn đề là một bộ lặp trả về từng `Puzzle`."
+    },
+    {
+      "id": "r42",
+      "from": "BenchmarkRunner",
+      "to": "SolveLimits",
+      "kind": "dependency",
+      "label": "tham số của run()",
+      "explain": "Cùng một giới hạn được áp dụng cho mọi đề trong lần chạy."
+    }
+  ]
+}
