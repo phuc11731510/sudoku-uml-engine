@@ -19,6 +19,7 @@ Nếu sau khi các file được sửa mà trang vẫn hiện bản cũ, nhấn 
 ## Cách xem
 
 - Cuộn chuột để phóng to hoặc thu nhỏ, kéo để di chuyển. Có bốn mức chi tiết (tự đổi theo độ phóng, hoặc chọn tay ở thanh bên): mức 0 tên và mục đích; mức 1 thuộc tính và phương thức dạng ngắn; mức 2 chữ ký đầy đủ, chưa có mô tả; mức 3 chữ ký đầy đủ cùng mô tả từng thành viên.
+- Trên điện thoại và máy tính bảng: kéo một ngón tay để di chuyển, **hai ngón tay để phóng to hoặc thu nhỏ**, chạm vào một lớp hoặc thành viên để xem chi tiết, nút ☰ mở danh sách và bộ lọc. Chú thích khi rê chuột chỉ có trên máy tính; trên cảm ứng hãy chạm vào tên kiểu để nhảy tới định nghĩa.
 - Số trên mỗi thẻ là **thứ tự đọc**. Thanh bên có danh sách theo thứ tự đó và nút «Bắt đầu từ bước 1»; khi một lớp đang được chọn, phím mũi tên trái và phải đi sang lớp trước hoặc sau.
 - Rê chuột lên một lớp, một thành viên, một đường nối hoặc một tên kiểu để xem chú thích; bấm để mở khung chi tiết bên phải. Bấm «Đóng» hoặc bấm vào chỗ trống để đóng khung.
 - **Mọi tên lớp và tên kiểu trong chữ ký đều bấm được** (kể cả trong khung chi tiết): bấm `Color` hoặc `Board` để nhảy tới nơi nó được định nghĩa. Nút «← Quay lại» ở đầu khung đưa về lựa chọn trước.

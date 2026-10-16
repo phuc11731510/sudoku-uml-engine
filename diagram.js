@@ -17,6 +17,8 @@
 
   /* Bốn mức chi tiết: 0 tổng quan, 1 thành viên, 2 chữ ký đầy đủ (không mô tả), 3 chữ ký đầy đủ và mô tả. */
   const LOD_T = [0.62, 1.05, 1.5];
+  const NARROW = window.matchMedia('(max-width: 1100px)'); // thanh bên là lớp phủ, mở bằng nút ☰
+  const PHONE = window.matchMedia('(max-width: 700px)');   // khung chi tiết phủ nửa dưới màn hình
   const desiredLod = (k) => {
     if (S.lodMode !== 'auto') return Number(S.lodMode);
     return k < LOD_T[0] ? 0 : (k < LOD_T[1] ? 1 : (k < LOD_T[2] ? 2 : 3));
@@ -479,12 +481,16 @@
     setLod(forced);
     const r = U.rects[id];
     const vp = $('#canvas').getBoundingClientRect();
+    // điện thoại: khung chi tiết phủ lên nửa dưới sơ đồ, nên chỉ phần còn lại phía trên là chỗ nhìn thấy
+    const view = $('#view-diagram');
+    const covered = (PHONE.matches && !view.classList.contains('nopanel')) ? $('#detail').getBoundingClientRect().height : 0;
+    const vh = Math.max(120, vp.height - covered);
     const cap = S.lodMode === 'auto' ? LOD_T[1] - 0.05 : 1.2;
-    const k = Math.min(cap, (vp.height - 60) / r.h, (vp.width - 60) / r.w);
+    const k = Math.min(cap, (vh - 60) / r.h, (vp.width - 60) / r.w);
     const kk = S.lodMode === 'auto' ? Math.max(LOD_T[0] + 0.03, k) : Math.max(0.3, k);
     const cx = r.x + r.w / 2;
-    const top = r.y + Math.min(r.h / 2, (vp.height / 2 - 30) / kk);
-    U.pz.set(kk, vp.width / 2 - cx * kk, vp.height / 2 - top * kk);
+    const top = r.y + Math.min(r.h / 2, (vh / 2 - 30) / kk);
+    U.pz.set(kk, vp.width / 2 - cx * kk, vh / 2 - top * kk);
   };
 
   /* ================= chú thích khi rê chuột ================= */
@@ -849,7 +855,7 @@
       row('phụ thuộc', line(true, { d: 'M34,3 L40,8 L34,13', cls: 'mk-open' })),
       el('div', { style: { marginTop: '8px' } },
         el('div', { class: 'row' }, el('span', { class: 'rnum', style: { background: 'var(--accent)' } }, '5'), el('span', null, 'số thứ tự đọc')),
-        el('div', { class: 'row' }, el('span', { class: 'tref', style: { cursor: 'default' } }, 'Color'), el('span', null, 'tên kiểu: rê chuột xem định nghĩa, bấm để nhảy tới')),
+        el('div', { class: 'row' }, el('span', { class: 'tref', style: { cursor: 'default' } }, 'Color'), el('span', null, 'tên kiểu: rê chuột xem định nghĩa (máy tính), bấm hoặc chạm để nhảy tới')),
         el('div', { class: 'row' }, el('span', { class: 'status-dot', style: { color: '#0d9488', borderColor: '#0d9488' } }, 'Hỗ trợ'), el('span', null, 'kiểm tra, dữ liệu, thực nghiệm')),
         el('div', { class: 'row' }, el('span', { class: 'status-dot', style: { color: '#db2777', borderColor: '#db2777' } }, 'Tùy chọn'), el('span', null, 'đề xuất chưa chốt')),
         el('div', { class: 'row', style: { color: 'var(--muted)', fontSize: '12px' } }, 'Thẻ không có nhãn là phần cốt lõi (hướng A và B). Màu mép trái thẻ là gói.')));
@@ -907,7 +913,13 @@
     U.pz = new U.PanZoom(canvas, stage, { minK: 0.1, maxK: 3, onChange: onZoom, onDragStart: () => U.tip.hide() });
 
     // chú thích khi rê chuột (trên sơ đồ và trong khung chi tiết)
+    // Trên màn hình cảm ứng, sau mỗi lần chạm trình duyệt còn sinh thêm sự kiện «rê chuột» giả; bỏ qua để chú thích không dính lại trên màn hình.
+    let touchInput = false;
+    const noteInput = (e) => { touchInput = e.pointerType === 'touch'; if (touchInput) U.tip.hide(); };
+    document.addEventListener('pointerdown', noteInput, true);
+    document.addEventListener('pointermove', noteInput, true);
     const hover = (e) => {
+      if (touchInput) return;
       if (U.pz.drag && U.pz.drag.moved) return;
       const content = hoverContent(e.target);
       if (content) U.tip.show(content, e.clientX, e.clientY); else U.tip.hide();
@@ -916,6 +928,7 @@
     stage.addEventListener('mousemove', (e) => U.tip.move(e.clientX, e.clientY));
     stage.addEventListener('mouseleave', () => U.tip.hide());
     detail.addEventListener('mouseover', (e) => {
+      if (touchInput) return;
       const content = e.target.closest('.tref, .xref') ? hoverContent(e.target) : null;
       if (content) U.tip.show(content, e.clientX, e.clientY); else U.tip.hide();
     });
@@ -959,6 +972,12 @@
     });
     canvas.addEventListener('click', (e) => {
       if (e.target === canvas && !U.pz.justDragged && S.selected) U.clearSelection();
+      // màn hình hẹp: thanh bên là lớp phủ, chạm vào sơ đồ thì đóng nó lại
+      if (!U.pz.justDragged && NARROW.matches && !e.target.closest('.canvas-controls')) $('#view-diagram').classList.remove('showside');
+    });
+    // màn hình hẹp: chọn một lớp trong thanh bên xong thì đóng thanh bên để thấy kết quả
+    $('#side').addEventListener('click', (e) => {
+      if (NARROW.matches && e.target.closest('#read-list button, #btn-start, #search-results button')) $('#view-diagram').classList.remove('showside');
     });
     // mũi tên trái và phải: sang lớp trước hoặc sau theo thứ tự đọc
     document.addEventListener('keydown', (e) => {
@@ -968,6 +987,10 @@
       else if (e.key === 'ArrowLeft') U.stepRead(-1);
     });
 
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      const h = $('#canvas-hint');
+      if (h) h.textContent = 'Kéo một ngón tay để di chuyển, hai ngón tay để phóng to hoặc thu nhỏ. Số trên mỗi thẻ là thứ tự đọc. Chạm vào một lớp hoặc một thành viên để xem đầy đủ; nút ☰ mở danh sách.';
+    }
     const hideHint = () => { const h = $('#canvas-hint'); if (h) h.remove(); };
     canvas.addEventListener('pointerdown', hideHint, { once: true });
     canvas.addEventListener('wheel', hideHint, { once: true, passive: true });
@@ -976,8 +999,7 @@
     $('#btn-fit').addEventListener('click', () => U.fitAll());
     $('#btn-side').addEventListener('click', () => {
       const v = $('#view-diagram');
-      const narrow = window.matchMedia('(max-width: 1100px)').matches;
-      if (narrow) { v.classList.toggle('showside'); } else { v.classList.toggle('noside'); }
+      if (NARROW.matches) { v.classList.toggle('showside'); } else { v.classList.toggle('noside'); }
     });
 
     U.tip.init();

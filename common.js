@@ -228,13 +228,17 @@ window.UML = window.UML || {};
       this.maxK = opts.maxK || 3;
       this.onChange = opts.onChange || function () { };
       this.onDragStart = opts.onDragStart || function () { };
-      this.drag = null;
-      this.justDragged = false;
+      this.drag = null;        // thao tác kéo bằng một ngón hoặc chuột
+      this.ptrs = new Map();   // các điểm chạm đang đặt trên khung: id -> {x, y}
+      this.pinch = null;       // thao tác hai ngón: phóng, thu và di chuyển cùng lúc
+      this._dragEnd = -1e9;    // thời điểm kết thúc lần kéo hoặc véo gần nhất (để bỏ qua cú bấm theo sau)
       viewport.addEventListener('wheel', (e) => this._wheel(e), { passive: false });
       viewport.addEventListener('pointerdown', (e) => this._down(e));
       viewport.addEventListener('pointermove', (e) => this._move(e));
       viewport.addEventListener('pointerup', (e) => this._up(e));
       viewport.addEventListener('pointercancel', (e) => this._up(e));
+      // Safari trên iPhone và iPad có thêm sự kiện «gesture» riêng cho thao tác véo
+      ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => viewport.addEventListener(t, (e) => e.preventDefault()));
       // chặn việc trình duyệt bôi đen chữ hoặc kéo chữ khi kéo sơ đồ
       viewport.addEventListener('selectstart', (e) => e.preventDefault());
       viewport.addEventListener('dragstart', (e) => e.preventDefault());
@@ -282,18 +286,63 @@ window.UML = window.UML || {};
       const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0016));
       this.zoomAt(e.clientX, e.clientY, factor);
     }
+    /* Đúng trong khoảng ngắn sau khi vừa kéo hoặc véo xong: cú «bấm» sinh ra ngay sau đó không được tính là chọn. */
+    get justDragged() { return performance.now() - this._dragEnd < 350; }
+
+    _capture(id) { try { this.vp.setPointerCapture(id); } catch (err) { /* bỏ qua */ } }
+
+    /* Bắt đầu thao tác hai ngón: nhớ điểm của sơ đồ đang nằm dưới trung điểm hai ngón và khoảng cách ban đầu. */
+    _startPinch() {
+      const ps = Array.from(this.ptrs.entries());
+      const [a, b] = [ps[0][1], ps[1][1]];
+      const r = this.vp.getBoundingClientRect();
+      const mx = (a.x + b.x) / 2 - r.left;
+      const my = (a.y + b.y) / 2 - r.top;
+      this.pinch = { ids: [ps[0][0], ps[1][0]], d0: Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), k0: this.k, wx: (mx - this.x) / this.k, wy: (my - this.y) / this.k };
+      if (this.drag) this.drag.moved = true;
+      ps.forEach(p => this._capture(p[0]));
+      this.vp.classList.add('grabbing');
+      this.onDragStart();
+    }
     _down(e) {
-      if (e.button !== 0) return;
-      this.drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: this.x, oy: this.y, moved: false };
+      if (e.pointerType === 'mouse') {
+        if (e.button !== 0) return;
+        // chuột chỉ có một con trỏ: bỏ trạng thái cũ nếu lần nhả chuột trước đã xảy ra ngoài cửa sổ
+        this.ptrs.clear();
+        this.pinch = null;
+      }
+      this.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.ptrs.size === 1) {
+        this.drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: this.x, oy: this.y, moved: false, touch: e.pointerType !== 'mouse' };
+      } else if (this.ptrs.size === 2 && !this.pinch) {
+        this._startPinch();
+      }
     }
     _move(e) {
+      const p = this.ptrs.get(e.pointerId);
+      if (!p) return;
+      p.x = e.clientX; p.y = e.clientY;
+      if (this.pinch) {
+        const [a, b] = this.pinch.ids.map(id => this.ptrs.get(id));
+        if (!a || !b) return;
+        const r = this.vp.getBoundingClientRect();
+        const mx = (a.x + b.x) / 2 - r.left;
+        const my = (a.y + b.y) / 2 - r.top;
+        const d = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y));
+        this.k = Math.min(this.maxK, Math.max(this.minK, this.pinch.k0 * d / this.pinch.d0));
+        this.x = mx - this.pinch.wx * this.k;
+        this.y = my - this.pinch.wy * this.k;
+        this.apply();
+        return;
+      }
       const d = this.drag;
       if (!d || d.id !== e.pointerId) return;
       const dx = e.clientX - d.sx;
       const dy = e.clientY - d.sy;
-      if (!d.moved && Math.abs(dx) + Math.abs(dy) > 5) {
+      // ngón tay rung nhiều hơn chuột, nên ngưỡng bắt đầu kéo lớn hơn
+      if (!d.moved && Math.abs(dx) + Math.abs(dy) > (d.touch ? 9 : 5)) {
         d.moved = true;
-        try { this.vp.setPointerCapture(e.pointerId); } catch (err) { /* bỏ qua */ }
+        this._capture(e.pointerId);
         this.vp.classList.add('grabbing');
         this.onDragStart();
       }
@@ -304,14 +353,27 @@ window.UML = window.UML || {};
       }
     }
     _up(e) {
+      if (!this.ptrs.has(e.pointerId)) return;
+      this.ptrs.delete(e.pointerId);
+      const wasMoved = (this.drag && this.drag.moved) || !!this.pinch;
+      if (this.pinch) {
+        // một ngón nhấc lên: ngón còn lại tiếp tục kéo sơ đồ, không bị giật
+        this.pinch = null;
+        const rest = Array.from(this.ptrs.entries())[0];
+        if (rest) {
+          this.drag = { id: rest[0], sx: rest[1].x, sy: rest[1].y, ox: this.x, oy: this.y, moved: true, touch: true };
+        } else {
+          this.drag = null;
+        }
+        this._dragEnd = performance.now();
+        if (!this.ptrs.size) this.vp.classList.remove('grabbing');
+        return;
+      }
       const d = this.drag;
       if (!d || d.id !== e.pointerId) return;
       this.drag = null;
       this.vp.classList.remove('grabbing');
-      if (d.moved) {
-        this.justDragged = true;
-        setTimeout(() => { this.justDragged = false; }, 0);
-      }
+      if (wasMoved) this._dragEnd = performance.now();
     }
   };
 
