@@ -13,10 +13,10 @@
     {
       "id": "r02",
       "from": "Board",
-      "to": "ColorSet",
+      "to": "ColorSetOps",
       "kind": "dependency",
       "label": "dùng phép toán bit",
-      "explain": "27 mặt nạ của Board là các giá trị ColorSet; mọi truy vấn của Board là phép toán trên tập màu."
+      "explain": "Board gọi các hàm của ColorSetOps (`add`, `remove`, `size`, `complement`...) trên 27 mặt nạ `usedColors`; mỗi mặt nạ là một giá trị kiểu `ColorSet`."
     },
     {
       "id": "r03",
@@ -306,11 +306,11 @@
     },
     {
       "id": "r36",
-      "from": "SearchFrame",
-      "to": "ColorSet",
+      "from": "BacktrackingSolver",
+      "to": "ColorSetOps",
       "kind": "dependency",
-      "label": "remaining",
-      "explain": "Trường remaining của khung là một tập màu."
+      "label": "lowest, remove",
+      "explain": "Mỗi khung của ngăn xếp có trường `remaining` kiểu `ColorSet`; `advance` lấy màu nhỏ nhất bằng `lowest` rồi bỏ màu đó khỏi tập bằng `remove`."
     },
     {
       "id": "r37",
@@ -363,6 +363,22 @@
       "kind": "dependency",
       "label": "tham số của run()",
       "explain": "Cùng một giới hạn được áp dụng cho mọi đề trong lần chạy."
+    },
+    {
+      "id": "r43",
+      "from": "GreedyColoringSolver",
+      "to": "ColorSetOps",
+      "kind": "dependency",
+      "label": "lowest",
+      "explain": "Với mỗi đỉnh được chọn, bộ giải tham lam lấy màu nhỏ nhất trong tập ứng viên bằng `ColorSetOps.lowest`."
+    },
+    {
+      "id": "r44",
+      "from": "MaxSaturationSelector",
+      "to": "ColorSetOps",
+      "kind": "dependency",
+      "label": "size",
+      "explain": "Độ bão hòa của đỉnh v là số màu của tập màu bị cấm: `ColorSetOps.size(forbiddenColors(v))`."
     }
   ]
 }

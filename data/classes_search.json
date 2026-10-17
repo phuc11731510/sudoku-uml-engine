@@ -200,7 +200,7 @@
           ],
           "returns": "Vertex",
           "summary": "Quét 81 đỉnh, trả về đỉnh chưa tô có độ bão hòa lớn nhất.",
-          "detail": "Bỏ qua `previous`. Với mỗi đỉnh chưa tô v: sat = size(forbiddenColors(v)). Giữ đỉnh có sat lớn hơn hẳn; khi bằng nhau áp dụng `tieBreak`. Nếu sat = 9 thì trả về ngay (đỉnh này sẽ hết màu, báo ngõ cụt càng sớm càng tốt). KHÔNG dừng sớm ở sat = 8 để giữ đúng định nghĩa DSATUR; có thể thử sau khi đo.",
+          "detail": "Bỏ qua `previous`. Với mỗi đỉnh chưa tô v: sat = ColorSetOps.size(forbiddenColors(v)). Giữ đỉnh có sat lớn hơn hẳn; khi bằng nhau áp dụng `tieBreak`. Nếu sat = 9 thì trả về ngay (đỉnh này sẽ hết màu, báo ngõ cụt càng sớm càng tốt). KHÔNG dừng sớm ở sat = 8 để giữ đúng định nghĩa DSATUR; có thể thử sau khi đo.",
           "pre": [
             "Như VertexSelector.select."
           ],
@@ -676,11 +676,11 @@
         }
       ],
       "impl": {
-        "cpp": "`class BacktrackingSolver final : public Solver`. `advance` là hàm không ảo (private/protected) nằm trong header hoặc cùng đơn vị dịch với `solve`. Dùng `ColorSet::lowest` để lấy màu nhỏ nhất của `remaining`.",
+        "cpp": "`class BacktrackingSolver final : public Solver`. `advance` là hàm không ảo (private/protected) nằm trong header hoặc cùng đơn vị dịch với `solve`. Dùng `ColorSetOps::lowest` để lấy màu nhỏ nhất của `remaining`.",
         "python": "Đặt toàn bộ máy trạng thái trong `advance` với biến cục bộ cho `board.colors` và `board.used`. Cách này nhanh nhất mà vẫn giữ lớp rõ ràng."
       },
       "notes": [
-        "Thứ tự thử màu cố định: tăng dần theo `ColorSet.lowest`. Thứ tự này không phải thuật toán thông minh nhưng đủ cho hướng A (so sánh hai bộ chọn đỉnh).",
+        "Thứ tự thử màu cố định: tăng dần theo `ColorSetOps.lowest`. Thứ tự này không phải thuật toán thông minh nhưng đủ cho hướng A (so sánh hai bộ chọn đỉnh).",
         "Giới hạn lời giải: `solutionLimit = 2` dùng để kiểm tra tính duy nhất của đề.",
         "Đã kiểm chứng bằng bản mẫu: đề mẫu có đúng 1 lời giải; đề gần rỗng có ít nhất 2; đề có hai chữ số 5 cùng hàng báo INVALID_PUZZLE; đề không có lời giải báo UNSOLVABLE."
       ],
@@ -871,7 +871,7 @@
       ],
       "read": 17,
       "stage": 4,
-      "readWhy": "Dữ liệu của ngăn xếp tìm kiếm (dùng ColorSet); cần biết trước BacktrackingSolver.",
+      "readWhy": "Dữ liệu của ngăn xếp tìm kiếm (có trường kiểu ColorSet); cần biết trước BacktrackingSolver.",
       "pos": [
         2214,
         174

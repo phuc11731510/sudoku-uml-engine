@@ -8,8 +8,8 @@
       "read": 0,
       "stage": 0,
       "readWhy": "Đọc trước nhất: mọi chữ ký trong sơ đồ dùng các tên kiểu này, nhưng chúng không phải lớp nên không có thẻ riêng.",
-      "summary": "Bảng định nghĩa các tên kiểu dùng trong chữ ký: Vertex, Color, CliqueId, Edge, Nanos và các kiểu chứa.",
-      "role": "Không phải một lớp. Đây là bảng tra: các tên như `Vertex` và `Color` chỉ là số nguyên nhỏ, còn `Array`, `List`, `Optional`, `Iterator` là kiểu chứa của ngôn ngữ. Rê chuột lên một tên kiểu trong bất kỳ chữ ký nào để xem định nghĩa, hoặc bấm để mở dòng tương ứng ở đây.",
+      "summary": "Bảng định nghĩa các tên kiểu dùng trong chữ ký: Vertex, Color, ColorSet, CliqueId, Edge, Nanos và các kiểu chứa.",
+      "role": "Không phải một lớp. Đây là bảng tra: các tên như `Vertex`, `Color` và `ColorSet` chỉ là số nguyên nhỏ, còn `Array`, `List`, `Optional`, `Iterator` là kiểu chứa của ngôn ngữ. Rê chuột lên một tên kiểu trong bất kỳ chữ ký nào để xem định nghĩa, hoặc bấm để mở dòng tương ứng ở đây.",
       "graph": "Chỉ số đỉnh (Vertex) và màu (Color) là hai kiểu cơ bản của mô hình tô màu đồ thị: đỉnh là số từ 0 đến 80, màu là số từ 1 đến 9.",
       "invariants": [],
       "attributes": [
@@ -33,6 +33,17 @@
           "detail": "Color không phải lớp: mỗi ô chỉ cần một số nguyên nhỏ, nên bọc thành đối tượng sẽ tốn bộ nhớ và thời gian mà không thêm lợi ích (cùng lý do với quyết định D05 về `ColorSet` ở mục 10 của `walkthrough-thiet-ke-engine.md`). Tập nhiều màu được lưu trong một số nguyên 9 bit gọi là `ColorSet`.",
           "example": "Ô đã điền chữ số 5 có Color = 5; ô trống có Color = 0.",
           "cpp": "`int` trong tham số; `std::uint8_t` trong mảng",
+          "python": "`int`"
+        },
+        {
+          "name": "ColorSet",
+          "token": "ColorSet",
+          "type": "int, từ 0 đến 511",
+          "vis": "",
+          "summary": "Một tập con của các màu 1 đến 9, lưu trong một số nguyên 9 bit: bit c − 1 bật nghĩa là màu c thuộc tập.",
+          "detail": "ColorSet không phải lớp, cùng lý do với Color (quyết định D05). Các hàm tính trên tập màu (thêm, bỏ, đếm màu, lấy màu nhỏ nhất...) nằm ở lớp tiện ích `ColorSetOps`. Còn các con số tập màu nằm ở nơi khác, ví dụ 27 mặt nạ trong `Board.usedColors`.",
+          "example": "Tập {1, 2, 4} gồm bit 0, 1, 3 nên bằng 1 + 2 + 8 = 11; tập rỗng là 0; tập đủ chín màu là 511.",
+          "cpp": "`std::uint16_t`",
           "python": "`int`"
         },
         {
@@ -153,11 +164,11 @@
       ],
       "methods": [],
       "impl": {
-        "cpp": "Không có lớp nào. `using Vertex = int;`, `using Color = int;` hoặc kiểu số nguyên nhỏ tương ứng trong mảng.",
+        "cpp": "Không có lớp nào. `using Vertex = int;`, `using Color = int;`, `using ColorSet = std::uint16_t;` hoặc kiểu số nguyên nhỏ tương ứng trong mảng.",
         "python": "Không có lớp nào. Dùng thẳng `int`; có thể đặt `Vertex = int` để chú thích kiểu."
       },
       "notes": [
-        "`ColorSet` cũng là một số nguyên (9 bit) nhưng có nhiều phép toán riêng nên được vẽ thành thẻ riêng."
+        "Các hàm tính trên `ColorSet` được gom ở một lớp tiện ích riêng là `ColorSetOps` (có thẻ riêng). Mỗi tên chỉ có một vai: `ColorSet` là kiểu, `ColorSetOps` là nhóm hàm."
       ],
       "pos": [
         0,

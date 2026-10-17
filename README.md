@@ -34,7 +34,7 @@ Nếu sau khi các file được sửa mà trang vẫn hiện bản cũ, nhấn 
 | `common.js`, `diagram.js`, `export.js`, `main.js` | Mã trang (không dùng thư viện ngoài) |
 | `data/meta.json` | Tên, phiên bản, các gói (màu), các chặng đọc và kích thước chuẩn để co giãn bố cục |
 | `data/classes_*.json` | Từng lớp: thuộc tính, phương thức, tiền điều kiện, hậu điều kiện, ví dụ, cài đặt C++ và Python, bước đọc (`read`), vị trí ban đầu (`pos`) |
-| `data/classes_types.json` | Thẻ «Kiểu cơ bản» (`BasicTypes`): định nghĩa `Vertex`, `Color`, `CliqueId`, `Edge`, `Nanos` và các kiểu chứa |
+| `data/classes_types.json` | Thẻ «Kiểu cơ bản» (`BasicTypes`): định nghĩa `Vertex`, `Color`, `ColorSet`, `CliqueId`, `Edge`, `Nanos` và các kiểu chứa |
 | `data/relations.json` | Các quan hệ giữa lớp |
 
 Muốn sửa nội dung thì sửa các file JSON; sơ đồ được vẽ lại từ dữ liệu, nên không phải sửa mã trang. Khi thêm hoặc xóa lớp, cần cập nhật `read` (thứ tự đọc) và `pos` (vị trí ban đầu) cho lớp đó.
