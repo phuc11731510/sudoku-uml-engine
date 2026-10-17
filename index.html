@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>UML Engine Sudoku</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="style.css?v=20261017e">
+<link rel="stylesheet" href="style.css?v=20261017f">
 </head>
 <body>
 
 <header id="topbar">
   <h1 id="app-title">UML Engine Sudoku</h1>
-  <span class="ver" id="app-ver"></span>
   <div class="right">
     <button id="btn-theme" title="Đổi giao diện sáng, tối, theo hệ thống">Giao diện: tự động</button>
   </div>
@@ -22,7 +21,6 @@
     <aside id="side" aria-label="Bộ lọc">
       <h4>Thứ tự đọc</h4>
       <div class="lead" style="font-size:12px">Số trên mỗi thẻ là bước đọc. Lớp nào dùng lớp khác thì lớp được dùng được đọc trước.</div>
-      <button id="btn-start" class="start-btn">Bắt đầu từ bước 1</button>
       <details id="read-details" open>
         <summary style="cursor:pointer;font-size:12px;margin-top:6px">Danh sách theo thứ tự đọc</summary>
         <div id="read-list" class="read-list"></div>
@@ -46,17 +44,12 @@
 
       <h4>Quan hệ</h4>
       <label class="pk-line"><input type="checkbox" id="chk-deps"> <span>Hiện mọi quan hệ phụ thuộc (nét đứt, mũi tên hở)</span></label>
-      <div class="lead" style="font-size:12px">Mặc định chỉ vẽ các quan hệ cấu trúc cho gọn; khi bạn chọn một lớp, các quan hệ phụ thuộc của lớp đó vẫn hiện. Lựa chọn này áp dụng cả cho ảnh xuất.</div>
+      <div class="lead" style="font-size:12px">Mặc định chỉ vẽ các quan hệ cấu trúc cho gọn; khi bạn chọn một lớp, các quan hệ phụ thuộc của lớp đó vẫn hiện.</div>
 
-      <h4>Chú giải</h4>
-      <div class="legend-box" id="legend"></div>
-
-      <h4>Xuất cho báo cáo</h4>
-      <div class="row">
-        <button id="btn-svg">Tải SVG</button>
-        <button id="btn-png">Tải PNG</button>
-      </div>
-      <div class="lead" style="font-size:12px">Ảnh tĩnh, nền trắng, chữ thật (dán được vào Word). Hiện các lớp đang bật ở bộ lọc gói.</div>
+      <details id="legend-details" class="fold">
+        <summary>Chú giải</summary>
+        <div class="legend-box" id="legend"></div>
+      </details>
 
     </aside>
 
@@ -81,9 +74,8 @@
 
 <div id="tooltip" role="tooltip"></div>
 
-<script src="common.js?v=20261017e"></script>
-<script src="diagram.js?v=20261017e"></script>
-<script src="export.js?v=20261017e"></script>
-<script src="main.js?v=20261017e"></script>
+<script src="common.js?v=20261017f"></script>
+<script src="diagram.js?v=20261017f"></script>
+<script src="main.js?v=20261017f"></script>
 </body>
 </html>

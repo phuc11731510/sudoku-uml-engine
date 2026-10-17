@@ -834,7 +834,6 @@
           el('span', { class: 'n' }, String(c.read)), el('span', null, c.id === 'BasicTypes' ? 'Kiểu cơ bản' : c.id)));
       });
     });
-    $('#btn-start').addEventListener('click', () => U.selectClass(D.byRead[0].id, { focus: true }));
 
     // chú giải
     const lg = $('#legend');
@@ -977,7 +976,7 @@
     });
     // màn hình hẹp: chọn một lớp trong thanh bên xong thì đóng thanh bên để thấy kết quả
     $('#side').addEventListener('click', (e) => {
-      if (NARROW.matches && e.target.closest('#read-list button, #btn-start, #search-results button')) $('#view-diagram').classList.remove('showside');
+      if (NARROW.matches && e.target.closest('#read-list button, #search-results button')) $('#view-diagram').classList.remove('showside');
     });
     // mũi tên trái và phải: sang lớp trước hoặc sau theo thứ tự đọc
     document.addEventListener('keydown', (e) => {

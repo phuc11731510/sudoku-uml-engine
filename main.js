@@ -42,12 +42,9 @@
     }
     const D = U.D;
     document.title = 'UML Engine Sudoku';
-    $('#app-ver').textContent = 'v' + D.meta.version + ' · ' + D.meta.updated;
     U.tip.init();
     U.initDiagram();
     U.fitAll();
-    $('#btn-svg').addEventListener('click', () => U.exportSvg());
-    $('#btn-png').addEventListener('click', () => U.exportPng());
     const h = decodeURIComponent((location.hash || '').replace(/^#/, ''));
     if (h && D.byId[h]) U.selectClass(h, { focus: true });
     try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { U.layout(); }); } catch (e) { /* bỏ qua */ }
