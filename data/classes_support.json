@@ -95,7 +95,7 @@
       "notes": [
         "Nếu thêm thuật toán mới (ví dụ hướng E tìm kiếm cục bộ), chỉ cần thêm một giá trị SolverKind và một nhánh trong `create`."
       ],
-      "read": 22,
+      "read": 20,
       "stage": 5,
       "readWhy": "Ghép loại bộ giải với bộ chọn đỉnh theo SolverKind.",
       "pos": [
@@ -137,7 +137,7 @@
         "python": "`enum.Enum`."
       },
       "notes": [],
-      "read": 21,
+      "read": 19,
       "stage": 5,
       "readWhy": "Bốn bộ giải của đồ án, dùng làm khóa chọn cho SolverFactory.",
       "pos": [
@@ -187,7 +187,7 @@
       "notes": [
         "Hai lớp kiểm tra (trong engine và độc lập trong tests) kiểm chứng lẫn nhau."
       ],
-      "read": 25,
+      "read": 23,
       "stage": 5,
       "readWhy": "Kiểm tra lời giải từ đầu bằng 810 cạnh của SudokuGraph.",
       "pos": [
@@ -257,7 +257,7 @@
         "python": "`@dataclass(frozen=True, slots=True)`."
       },
       "notes": [],
-      "read": 24,
+      "read": 22,
       "stage": 5,
       "readWhy": "Kết quả kiểm tra; dùng VerificationError.",
       "pos": [
@@ -303,7 +303,7 @@
         "python": "`enum.Enum`."
       },
       "notes": [],
-      "read": 23,
+      "read": 21,
       "stage": 5,
       "readWhy": "Các lý do một lời giải bị coi là sai.",
       "pos": [
@@ -398,7 +398,7 @@
       "notes": [
         "Đã xem vài dòng đầu của cả 9 tập trong `reference/tdoku/data.zip` ngày 2026-10-16: dòng chú thích bắt đầu bằng `#`; dòng đề dài 81 ký tự, ô trống là dấu chấm; tập `puzzles7_serg_benchmark` dùng kết thúc dòng `\\r\\n`; tập `puzzles8_gen_puzzles` có dòng chú thích `# ALLOWZERO`, gợi ý ký tự `0` cũng là ô trống. Chưa kiểm tra từng dòng của mỗi tập, và chưa kiểm tra giấy phép từng tập."
       ],
-      "read": 26,
+      "read": 24,
       "stage": 5,
       "readWhy": "Đọc tập đề từ file để chạy thực nghiệm.",
       "pos": [
@@ -450,7 +450,7 @@
       "notes": [
         "Chưa có tùy chọn lưu kết quả từng đề; thêm khi báo cáo cần phân phối (histogram) số nút. Khi cần chỉ cần thêm tham số, không phải đổi lớp khác."
       ],
-      "read": 28,
+      "read": 26,
       "stage": 5,
       "readWhy": "Chạy một bộ giải trên nhiều đề; dùng hầu hết các lớp ở trên nên đọc gần cuối.",
       "pos": [
@@ -586,7 +586,7 @@
         "python": "`@dataclass(slots=True)`."
       },
       "notes": [],
-      "read": 27,
+      "read": 25,
       "stage": 5,
       "readWhy": "Số liệu tổng hợp của một lần thực nghiệm; dùng SearchStats.",
       "pos": [

@@ -105,16 +105,6 @@
       "explain": "Bộ giải tham lam là một Solver."
     },
     {
-      "id": "r13",
-      "from": "BacktrackingSolver",
-      "to": "SearchFrame",
-      "kind": "composition",
-      "label": "frames",
-      "fromMult": "1",
-      "toMult": "81",
-      "explain": "Ngăn xếp tìm kiếm là một mảng cố định 81 SearchFrame nằm ngay trong bộ giải (không cấp phát thêm)."
-    },
-    {
       "id": "r14",
       "from": "Solver",
       "to": "Puzzle",
@@ -310,7 +300,7 @@
       "to": "ColorSetOps",
       "kind": "dependency",
       "label": "lowest, remove",
-      "explain": "Mỗi khung của ngăn xếp có trường `remaining` kiểu `ColorSet`; `advance` lấy màu nhỏ nhất bằng `lowest` rồi bỏ màu đó khỏi tập bằng `remove`."
+      "explain": "`remaining` (biến cục bộ của mỗi lời gọi `search`) có kiểu `ColorSet`; `search` lấy màu nhỏ nhất bằng `lowest` rồi bỏ màu đó khỏi tập bằng `remove`."
     },
     {
       "id": "r37",
@@ -321,16 +311,6 @@
       "fromMult": "1",
       "toMult": "1",
       "explain": "Bộ giải sở hữu bộ đếm của lần giải hiện tại; `stats()` trả về tham chiếu tới nó."
-    },
-    {
-      "id": "r38",
-      "from": "BacktrackingSolver",
-      "to": "SearchPhase",
-      "kind": "association",
-      "label": "phase",
-      "fromMult": "*",
-      "toMult": "1",
-      "explain": "Giai đoạn hiện tại của máy trạng thái SELECT, TRY, BACKTRACK."
     },
     {
       "id": "r39",

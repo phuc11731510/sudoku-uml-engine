@@ -262,7 +262,7 @@
           "name": "maxDepth",
           "type": "int",
           "vis": "+",
-          "summary": "Độ sâu lớn nhất của ngăn xếp tìm kiếm.",
+          "summary": "Độ sâu lớn nhất của đường đệ quy tìm kiếm (số đỉnh đang được tô cùng lúc).",
           "example": "Đề mẫu: 51 (số ô trống)."
         }
       ],
@@ -317,8 +317,8 @@
         }
       ],
       "impl": {
-        "cpp": "`struct SearchStats` với các trường `std::int64_t`; các phép tăng nằm trực tiếp trong `advance`.",
-        "python": "Lớp có `__slots__`, hoặc biến cục bộ trong `advance` rồi ghi lại cuối; nhanh hơn thuộc tính đối tượng."
+        "cpp": "`struct SearchStats` với các trường `std::int64_t`; các phép tăng nằm trực tiếp trong hàm tìm kiếm.",
+        "python": "Lớp có `__slots__`, hoặc biến cục bộ trong hàm tìm kiếm (`search` / `advance`) rồi ghi lại cuối; nhanh hơn thuộc tính đối tượng."
       },
       "notes": [
         "Đẳng thức T1 và T2 đã được kiểm tra bằng mã trên 10 lần chạy của bản mẫu: đề mẫu (quay lui thường, DSATUR, DSATUR với solutionLimit = 2), đề Inkala (hai luật hòa), đề gần rỗng với solutionLimit = 2, đề bị giới hạn 50 nút, đề vô nghiệm và hai bộ giải tham lam. Nên đưa vào bộ kiểm tra đơn vị.",

@@ -2,7 +2,7 @@
   "meta": {
     "title": "Thiết kế UML của engine Sudoku (tô màu đồ thị)",
     "version": "0.1",
-    "updated": "2026-10-17"
+    "updated": "2026-10-24"
   },
   "packages": [
     {
@@ -21,7 +21,7 @@
       "id": "solvers",
       "name": "Bộ giải",
       "color": "#22c55e",
-      "description": "Máy trạng thái chạy từng bước: quay lui chính xác và tô màu tham lam."
+      "description": "Bộ giải chạy từng bước được: quay lui chính xác (đệ quy, dùng generator) và tô màu tham lam."
     },
     {
       "id": "results",
@@ -66,7 +66,7 @@
     {
       "id": 4,
       "title": "Bộ giải",
-      "text": "Máy trạng thái chạy từng bước: khung chung, rồi quay lui chính xác (hướng A) và tô màu tham lam (hướng B)."
+      "text": "Bộ giải chạy từng bước được: khung chung, rồi quay lui chính xác bằng đệ quy (hướng A) và tô màu tham lam (hướng B)."
     },
     {
       "id": 5,

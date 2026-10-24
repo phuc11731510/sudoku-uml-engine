@@ -283,7 +283,7 @@
       "stereotype": "abstract",
       "package": "solvers",
       "status": "core",
-      "summary": "Máy trạng thái chạy từng bước, giao diện chung của mọi thuật toán giải.",
+      "summary": "Vòng đời chạy từng bước được, giao diện chung của mọi thuật toán giải.",
       "role": "Định nghĩa vòng đời của một lần giải: `begin` dựng trạng thái, `step` thực hiện đúng MỘT thay đổi của bảng (tô hoặc bỏ một đỉnh) hoặc kết thúc, `isFinished` và `result` cho biết kết quả. `solve` là đường chạy trọn vẹn không có sự kiện, dùng cho thực nghiệm và là đường nhanh nhất. Giao diện đồ họa dùng `step` để hiện từng bước.",
       "graph": "Một thuật toán tô màu đồ thị: nhận phép tô màu một phần, mở rộng bằng 9 màu thành phép tô màu hợp lệ toàn bộ nếu có.",
       "invariants": [
@@ -436,7 +436,7 @@
           ],
           "returns": "SolveResult",
           "summary": "Chạy trọn vẹn từ `begin` đến hết và trả về kết quả; đường nhanh cho thực nghiệm.",
-          "detail": "Mặc định cài bằng vòng lặp gọi `step`. Lớp con SHOULD ghi đè bằng một vòng lặp trong đó gọi hàm nội bộ không ảo `advance()` trực tiếp (không tạo sự kiện), để tránh một lời gọi hàm ảo cho mỗi nút. Đồng hồ đo thời gian chỉ bao quanh vòng lặp này.",
+          "detail": "Mặc định cài bằng vòng lặp gọi `step`. Lớp con SHOULD ghi đè bằng một đường chạy riêng không tạo sự kiện, để tránh một lời gọi hàm ảo cho mỗi nút: bộ giải tham lam gọi trực tiếp hàm nội bộ không ảo `advance()` trong một vòng lặp; bộ giải quay lui chạy hết generator của hàm đệ quy `search` (xem BacktrackingSolver). Đồng hồ đo thời gian chỉ bao quanh vòng lặp này.",
           "pre": [
             "Không có."
           ],
@@ -515,37 +515,21 @@
       "stereotype": "class",
       "package": "solvers",
       "status": "core",
-      "summary": "Quay lui chính xác bằng ngăn xếp tường minh: thử từng màu còn dùng được, gặp ngõ cụt thì lùi.",
-      "role": "Hướng A. Với `FirstUncoloredSelector` là quay lui thường (mục 5.1); với `MaxSaturationSelector` là quay lui DSATUR/MRV (mục 5.2). Cài đặt bằng vòng lặp với một mảng khung cố định, không đệ quy và không cấp phát trong lúc chạy. Đếm được nhiều lời giải (kiểm tra tính duy nhất).",
+      "summary": "Quay lui chính xác bằng đệ quy: thử từng màu còn dùng được, gặp ngõ cụt thì trả về để lời gọi cha thử màu khác.",
+      "role": "Hướng A. Với `FirstUncoloredSelector` là quay lui thường (mục 5.1); với `MaxSaturationSelector` là quay lui DSATUR/MRV (mục 5.2). Cài đặt bằng một hàm đệ quy `search`: mỗi lời gọi chọn một đỉnh, thử lần lượt từng màu còn lại, rồi gọi chính nó cho đỉnh kế tiếp. Để vẫn chạy được từng bước, `search` là một generator (hàm Python dùng `yield` để tạm dừng và tiếp tục sau): mỗi lần tô hoặc gỡ một đỉnh nó `yield` một StepEvent, và các lời gọi lồng nhau chuyển giao cho nhau bằng `yield from`. Đếm được nhiều lời giải (kiểm tra tính duy nhất).",
       "graph": "Tìm kiếm có quay lui trên cây các phép tô màu một phần: mỗi nút là một lần tô, ngõ cụt là đỉnh không còn màu hợp lệ.",
       "invariants": [
-        "B1. Khung 0..depth−1 có `vertex` đang được tô trên bảng; các đỉnh của các khung đều khác nhau và là đỉnh chưa tô lúc đầu.",
-        "B2. `remaining` của một khung chỉ chứa các màu chưa thử ở đỉnh đó và nằm trong tập ứng viên lúc chọn.",
-        "B3. Khi giai đoạn là SELECT, bảng chứa đúng các ô cho sẵn và các ô của khung 0..depth−1."
+        "B1. Các đỉnh đang được tô trên đường đệ quy (từ lời gọi gốc đến lời gọi hiện tại) đều khác nhau và là đỉnh chưa tô lúc đầu; độ sâu đệ quy bằng số đỉnh đó.",
+        "B2. `remaining` (biến cục bộ của mỗi lời gọi) chỉ chứa các màu chưa thử ở đỉnh của lời gọi đó và nằm trong tập ứng viên lúc chọn.",
+        "B3. Khi một lời gọi bắt đầu chọn đỉnh, bảng chứa đúng các ô cho sẵn và các ô đang tô trên đường đệ quy."
       ],
       "attributes": [
         {
-          "name": "frames",
-          "type": "Array<SearchFrame, 81>",
+          "name": "events",
+          "type": "Generator<StepEvent>",
           "vis": "-",
-          "summary": "Ngăn xếp khung tìm kiếm cố định 81 phần tử.",
-          "detail": "Độ sâu tối đa là số đỉnh chưa tô, không quá 81, nên không bao giờ phải cấp phát thêm.",
-          "cpp": "`std::array<SearchFrame, 81>` trên đối tượng.",
-          "python": "Hai danh sách song song `frame_vertex`, `frame_remaining` độ dài 81 nhanh hơn danh sách đối tượng."
-        },
-        {
-          "name": "depth",
-          "type": "int",
-          "vis": "-",
-          "summary": "Số khung đang có trên ngăn xếp.",
-          "example": "Đề mẫu với DSATUR: sau bước cuối depth = 51."
-        },
-        {
-          "name": "phase",
-          "type": "SearchPhase",
-          "vis": "-",
-          "summary": "Giai đoạn tiếp theo của máy trạng thái: SELECT, TRY hoặc BACKTRACK.",
-          "detail": "SearchPhase là kiểu liệt kê riêng tư của lớp này (SELECT, TRY, BACKTRACK); được vẽ thành một thẻ để mọi kiểu trong chữ ký đều có định nghĩa."
+          "summary": "Generator của lần giải hiện tại: mỗi lần `next` chạy `search` đến sự kiện kế tiếp.",
+          "detail": "Tạo ở `begin` từ `search(0, NO_VERTEX)`. Hết generator nghĩa là lần giải đã kết thúc (hết cây tìm kiếm, đủ lời giải hoặc chạm `maxNodes`)."
         },
         {
           "name": "solutionCount",
@@ -582,7 +566,7 @@
             "`selector` không rỗng."
           ],
           "post": [
-            "Mảng khung được cấp phát đúng một lần (81 phần tử); chưa có lần giải nào."
+            "Chưa có lần giải nào và chưa có generator."
           ],
           "complexity": "O(1)",
           "perf": "Một lần cho mỗi bộ giải; không nằm trong vòng lặp nóng.",
@@ -597,7 +581,7 @@
             "limits: SolveLimits"
           ],
           "returns": "void",
-          "summary": "Dựng bảng, đặt phase = SELECT, depth = 0, xóa thống kê.",
+          "summary": "Dựng bảng, tạo generator `search(0, NO_VERTEX)`, xóa thống kê.",
           "pre": [
             "Không có."
           ],
@@ -612,15 +596,15 @@
           "vis": "+",
           "params": [],
           "returns": "StepEvent",
-          "summary": "Gọi `advance()` một lần và trả về `lastEvent`.",
+          "summary": "Chạy generator đến sự kiện kế tiếp (`next(events)`) và trả về sự kiện đó; hết generator thì đánh dấu kết thúc.",
           "pre": [
             "Đã gọi `begin`."
           ],
           "post": [
             "Như Solver.step."
           ],
-          "complexity": "Như `advance`",
-          "perf": "Một lời gọi ảo mỗi lần; dùng cho giao diện."
+          "complexity": "Như một nút của `search`, cộng một lần chuyển giao qua chuỗi `yield from` có độ dài bằng độ sâu đệ quy (tối đa 81)",
+          "perf": "Dùng cho giao diện. Mỗi lần `next` đi qua cả chuỗi `yield from` từ lời gọi gốc đến lời gọi sâu nhất; chưa đo."
         },
         {
           "name": "solve",
@@ -630,7 +614,7 @@
             "limits: SolveLimits"
           ],
           "returns": "SolveResult",
-          "summary": "Đo thời gian quanh `begin` và vòng lặp `while (!finished) advance()`.",
+          "summary": "Đo thời gian quanh `begin` và vòng lặp chạy hết generator `search`, bỏ qua các sự kiện.",
           "pre": [
             "Không có."
           ],
@@ -638,26 +622,29 @@
             "Như Solver.solve."
           ],
           "complexity": "Theo cây tìm kiếm",
-          "perf": "Đường nóng: gọi trực tiếp `advance()` không ảo nên được nội tuyến.",
+          "perf": "Đường nóng: mỗi nút tốn một lần tiếp tục generator và tạo một StepEvent. Nếu đo thấy đáng kể thì thêm một bản đệ quy thường không `yield` dành riêng cho `solve` (chưa đo; khi đó hai bản phải giữ đồng bộ).",
           "example": "Đề mẫu: quay lui thường tốn 4 208 nút và 4 157 lần quay lui; quay lui DSATUR tốn 51 nút và 0 lần quay lui (bản mẫu Python; số đếm không phụ thuộc ngôn ngữ). Đề «Inkala»: DSATUR tốn 10 101 nút."
         },
         {
-          "name": "advance",
+          "name": "search",
           "vis": "#",
-          "params": [],
-          "returns": "void",
-          "summary": "Chạy máy trạng thái SELECT/TRY/BACKTRACK cho đến khi có một thay đổi bảng hoặc kết thúc.",
-          "detail": "Mã giả đầy đủ ở mục 8.1 của `Walkthrough/walkthrough-thiet-ke-engine.md`. Tóm tắt: SELECT chọn đỉnh bằng bộ chọn và đẩy khung (hoặc phát hiện ngõ cụt); TRY lấy màu nhỏ nhất còn lại của khung trên cùng và `assign`; BACKTRACK `unassign` đỉnh của khung trên cùng rồi hoặc thử màu kế tiếp hoặc bỏ khung. Các chuyển trạng thái không đổi bảng (chọn đỉnh, ngõ cụt) lặp bên trong, không trả về.",
+          "params": [
+            "depth: int",
+            "previous: Vertex"
+          ],
+          "returns": "Generator<StepEvent>",
+          "summary": "Hàm đệ quy: chọn đỉnh, thử từng màu còn lại, `yield` sự kiện mỗi lần tô hoặc gỡ, và gọi chính nó cho đỉnh kế tiếp.",
+          "detail": "Mỗi lời gọi làm các việc sau, theo thứ tự: (1) `v = selector.select(board, previous)`. (2) Nếu `v` là NO_VERTEX thì bảng đã đầy: tăng `solutionCount`, lưu bản sao lời giải nếu là lời giải đầu, và dừng cả cây khi `solutionCount` chạm `solutionLimit`; rồi trả về. (3) `remaining = availableColors(v)`; theo số màu của `remaining` tăng `deadEnds` (0 màu, trả về ngay), `forcedMoves` (1 màu) hoặc `choicePoints` (từ 2 màu). (4) Với mỗi màu `c` nhỏ nhất còn lại (`ColorSetOps.lowest`, rồi `remove` khỏi `remaining`): `assign(v, c)`, tăng `nodes`, cập nhật `maxDepth`, dừng nếu chạm `maxNodes`; `yield` ASSIGN; `yield from search(depth + 1, v)`; nếu cây chưa bị dừng thì `unassign(v)`, tăng `backtracks`, `yield` UNASSIGN. (5) Hết màu thì trả về cho lời gọi cha thử màu khác.",
           "pre": [
             "Chưa kết thúc."
           ],
           "post": [
+            "Mỗi lần `yield` bảng đổi không quá một đỉnh so với lần `yield` trước.",
             "`lastEvent` ghi sự kiện.",
-            "Bảng đổi không quá một đỉnh.",
             "Thống kê cập nhật."
           ],
           "complexity": "O(81) cho mỗi nút khi dùng DSATUR (do bộ chọn), O(1) khi dùng thứ tự cố định",
-          "perf": "Hàm nóng nhất của engine. Chỉ dùng mảng cố định, không cấp phát, không ngoại lệ. Cập nhật bộ đếm là các phép cộng đơn giản. Ghi `lastEvent` là 3 phép ghi nhỏ cho mỗi nút."
+          "perf": "Hàm nóng nhất của engine. Trong Python mỗi lời gọi đệ quy là một lời gọi hàm kèm một khung generator nên đắt hơn một vòng lặp trong cùng khung; chưa đo. Độ sâu tối đa là 81 nên không chạm giới hạn đệ quy mặc định của Python (1000). Không cấp phát gì ngoài StepEvent nhỏ của mỗi lần `yield`."
         },
         {
           "name": "result",
@@ -676,17 +663,18 @@
         }
       ],
       "impl": {
-        "cpp": "`class BacktrackingSolver final : public Solver`. `advance` là hàm không ảo (private/protected) nằm trong header hoặc cùng đơn vị dịch với `solve`. Dùng `ColorSetOps::lowest` để lấy màu nhỏ nhất của `remaining`.",
-        "python": "Đặt toàn bộ máy trạng thái trong `advance` với biến cục bộ cho `board.colors` và `board.used`. Cách này nhanh nhất mà vẫn giữ lớp rõ ràng."
+        "cpp": "Không còn là đích chính (engine nay là Python). Nếu viết lại bằng C++ thì dùng hàm đệ quy cho `solve`; chế độ từng bước cần coroutine (C++20) hoặc một ngăn xếp tường minh.",
+        "python": "Hàm đệ quy `search` là generator; các lời gọi lồng nhau nối bằng `yield from`. `v` và `remaining` là biến cục bộ của mỗi lời gọi nên không cần mảng khung."
       },
       "notes": [
+        "Quyết định 2026-10-24 (Phúc): bộ giải quay lui viết bằng đệ quy vì mã ngắn hơn; chế độ từng bước dùng generator thay cho ngăn xếp tường minh và máy trạng thái SELECT/TRY/BACKTRACK. Các số đo của bản mẫu (số nút, số lần quay lui) không phụ thuộc cách cài đặt.",
         "Thứ tự thử màu cố định: tăng dần theo `ColorSetOps.lowest`. Thứ tự này không phải thuật toán thông minh nhưng đủ cho hướng A (so sánh hai bộ chọn đỉnh).",
         "Giới hạn lời giải: `solutionLimit = 2` dùng để kiểm tra tính duy nhất của đề.",
         "Đã kiểm chứng bằng bản mẫu: đề mẫu có đúng 1 lời giải; đề gần rỗng có ít nhất 2; đề có hai chữ số 5 cùng hàng báo INVALID_PUZZLE; đề không có lời giải báo UNSOLVABLE."
       ],
-      "read": 19,
+      "read": 17,
       "stage": 4,
-      "readWhy": "Hướng A: máy trạng thái SELECT, TRY, BACKTRACK. Đọc cùng mã giả ở mục 8.1 của walkthrough-thiet-ke-engine.md.",
+      "readWhy": "Hướng A: quay lui bằng đệ quy, chạy từng bước nhờ generator.",
       "pos": [
         1796,
         209
@@ -825,96 +813,12 @@
       "notes": [
         "Khác với số «14 màu» và «10 màu» đã đo ở walkthrough-bat-dau-ke-hoach.md: các số đó là số màu tham lam cần trên đồ thị RỖNG khi không giới hạn 9 màu, do `GraphAnalyzer` (tùy chọn) đo. Bộ giải này bị giới hạn 9 màu nên đo «tỉ lệ thành công» thay vì «số màu»."
       ],
-      "read": 20,
+      "read": 18,
       "stage": 4,
       "readWhy": "Hướng B: bản đơn giản hơn của BacktrackingSolver, không quay lui.",
       "pos": [
         1339,
         1226
-      ]
-    },
-    {
-      "id": "SearchFrame",
-      "stereotype": "value",
-      "package": "solvers",
-      "status": "core",
-      "summary": "Một khung của ngăn xếp tìm kiếm: đỉnh đang xử lý và các màu chưa thử.",
-      "role": "Thay cho một lần gọi đệ quy. Giữ đủ thông tin để thử màu kế tiếp sau khi quay lui.",
-      "graph": "Một nút của cây tìm kiếm tại đỉnh v: các nhánh con là các màu trong tập ứng viên.",
-      "invariants": [
-        "F1. `remaining` luôn là tập con của tập ứng viên lúc chọn đỉnh."
-      ],
-      "attributes": [
-        {
-          "name": "vertex",
-          "type": "Vertex",
-          "vis": "+",
-          "summary": "Đỉnh đang xử lý ở khung này.",
-          "example": "Khung đầu tiên của DSATUR trên đề mẫu: vertex = 40."
-        },
-        {
-          "name": "remaining",
-          "type": "ColorSet",
-          "vis": "+",
-          "summary": "Các màu chưa thử ở đỉnh này.",
-          "detail": "Ban đầu bằng `availableColors(vertex)`. Mỗi lần thử, màu nhỏ nhất bị bỏ khỏi tập.",
-          "example": "Đỉnh có ứng viên {1, 2, 4}: remaining = 11 ban đầu; sau lần thử màu 1: 10; sau màu 2: 8."
-        }
-      ],
-      "methods": [],
-      "impl": {
-        "cpp": "`struct SearchFrame { std::uint8_t vertex; std::uint16_t remaining; };`",
-        "python": "Không tạo đối tượng; dùng hai danh sách song song `frame_vertex` và `frame_remaining` để nhanh."
-      },
-      "notes": [
-        "Trong sơ đồ giữ SearchFrame để mô tả dữ liệu. Python có thể không có lớp này."
-      ],
-      "read": 17,
-      "stage": 4,
-      "readWhy": "Dữ liệu của ngăn xếp tìm kiếm (có trường kiểu ColorSet); cần biết trước BacktrackingSolver.",
-      "pos": [
-        2214,
-        174
-      ]
-    },
-    {
-      "id": "SearchPhase",
-      "stereotype": "enum",
-      "package": "solvers",
-      "status": "core",
-      "summary": "Ba giai đoạn của máy trạng thái trong BacktrackingSolver: SELECT, TRY, BACKTRACK.",
-      "role": "Kiểu liệt kê riêng tư của `BacktrackingSolver`: cho biết lần `advance()` kế tiếp sẽ chọn đỉnh, tô màu hay lùi. Không lộ ra ngoài lớp; được vẽ thành một thẻ để mọi kiểu xuất hiện trong chữ ký đều có định nghĩa.",
-      "graph": "Ba trạng thái của vòng lặp tìm kiếm có quay lui.",
-      "invariants": [],
-      "attributes": [],
-      "methods": [],
-      "values": [
-        {
-          "name": "SELECT",
-          "meaning": "Kế tiếp là chọn đỉnh chưa tô và đẩy một khung lên ngăn xếp (chưa đổi bảng)."
-        },
-        {
-          "name": "TRY",
-          "meaning": "Kế tiếp là tô màu nhỏ nhất chưa thử của khung trên cùng (đổi bảng bằng `assign`)."
-        },
-        {
-          "name": "BACKTRACK",
-          "meaning": "Kế tiếp là bỏ màu của khung trên cùng (đổi bảng bằng `unassign`) rồi thử màu khác hoặc bỏ khung."
-        }
-      ],
-      "impl": {
-        "cpp": "`enum class SearchPhase : std::uint8_t { Select, Try, Backtrack };` đặt trong phần riêng tư của lớp.",
-        "python": "`enum.IntEnum` hoặc ba hằng số nguyên cấp module."
-      },
-      "notes": [
-        "Mã giả của ba giai đoạn nằm ở mục 8.1 của `Walkthrough/walkthrough-thiet-ke-engine.md`."
-      ],
-      "read": 18,
-      "stage": 4,
-      "readWhy": "Ba giai đoạn của máy trạng thái trong BacktrackingSolver; cần biết trước khi đọc mã giả của nó.",
-      "pos": [
-        2222,
-        476
       ]
     }
   ]

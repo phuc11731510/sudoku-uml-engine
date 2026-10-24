@@ -82,7 +82,7 @@
         "Quang phổ của đồ thị (các giá trị riêng 20, 11, 5, 2, −1, −4) tính bằng script Python với numpy ngoài engine, vì không có lợi ích gì khi viết lại đại số tuyến tính trong C++.",
         "Gói này là đề xuất, chưa chốt: giữ nó ở trạng thái tùy chọn trong sơ đồ để phần còn lại không phụ thuộc vào nó."
       ],
-      "read": 30,
+      "read": 28,
       "stage": 6,
       "readWhy": "Phân tích đồ thị và đếm số màu của tham lam (tùy chọn).",
       "pos": [
@@ -159,7 +159,7 @@
         "python": "`@dataclass(frozen=True, slots=True)`."
       },
       "notes": [],
-      "read": 29,
+      "read": 27,
       "stage": 6,
       "readWhy": "Các tính chất đồ thị Sudoku do GraphAnalyzer tính (tùy chọn).",
       "pos": [
